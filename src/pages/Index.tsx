@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import FactoryHeader from "@/components/factory/FactoryHeader";
 import AppIdeaInput from "@/components/factory/AppIdeaInput";
 import TransparencyCenter from "@/components/factory/TransparencyCenter";
@@ -6,6 +6,7 @@ import type { ActionNotification } from "@/components/factory/TransparencyCenter
 import AppPreview from "@/components/factory/AppPreview";
 import FactoryActions from "@/components/factory/FactoryActions";
 import { toast } from "sonner";
+import { getStoredCredentials } from "@/lib/supabase";
 
 const generateActionPlan = (idea: string): ActionNotification[] => [
   {
@@ -50,12 +51,14 @@ const Index = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
   const [appName, setAppName] = useState("");
+  const [isBackendConnected, setIsBackendConnected] = useState(
+    () => !!getStoredCredentials()
+  );
 
   const handleGenerate = useCallback((idea: string) => {
     setIsGenerating(true);
     setAppName(idea.split(" ").slice(0, 4).join(" "));
 
-    // Simulate generation with action plan
     setTimeout(() => {
       setNotifications(generateActionPlan(idea));
       setIsGenerating(false);
@@ -97,10 +100,18 @@ const Index = () => {
     );
   }, []);
 
+  const handleBackendConnected = useCallback(() => {
+    setIsBackendConnected(true);
+  }, []);
+
+  const handleBackendDisconnected = useCallback(() => {
+    setIsBackendConnected(false);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <FactoryHeader />
+        <FactoryHeader isBackendConnected={isBackendConnected} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
           {/* Left column */}
@@ -123,6 +134,9 @@ const Index = () => {
               isGenerated={isGenerated}
               onPublish={handlePublish}
               onExport={handleExport}
+              isBackendConnected={isBackendConnected}
+              onBackendConnected={handleBackendConnected}
+              onBackendDisconnected={handleBackendDisconnected}
             />
           </div>
         </div>

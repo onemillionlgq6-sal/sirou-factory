@@ -1,7 +1,11 @@
 import { motion } from "framer-motion";
 import { Factory, Shield, Zap } from "lucide-react";
 
-const FactoryHeader = () => {
+interface FactoryHeaderProps {
+  isBackendConnected?: boolean;
+}
+
+const FactoryHeader = ({ isBackendConnected = false }: FactoryHeaderProps) => {
   return (
     <motion.header
       initial={{ opacity: 0, y: -20 }}
@@ -23,9 +27,15 @@ const FactoryHeader = () => {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sf-safe/10 text-sf-safe text-xs font-medium border border-sf-safe/20">
+        <div
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+            isBackendConnected
+              ? "bg-sf-safe/10 text-sf-safe border-sf-safe/20"
+              : "bg-muted text-muted-foreground border-border"
+          }`}
+        >
           <Shield className="h-3.5 w-3.5" />
-          Sovereign Mode
+          {isBackendConnected ? "Sovereign Mode: Online" : "Sovereign Mode: Offline"}
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
           <Zap className="h-3.5 w-3.5" />
