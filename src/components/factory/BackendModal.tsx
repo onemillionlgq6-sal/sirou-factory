@@ -19,6 +19,7 @@ import {
   initializeTables,
 } from "@/lib/supabase";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
 
 interface BackendModalProps {
   open: boolean;
@@ -40,6 +41,7 @@ const BackendModal = ({
   const [isConnecting, setIsConnecting] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [statusMessage, setStatusMessage] = useState("");
+  const { t } = useI18n();
 
   useEffect(() => {
     if (open) {
@@ -53,7 +55,7 @@ const BackendModal = ({
 
   const handleConnect = async () => {
     if (!url.trim() || !anonKey.trim()) {
-      toast.error("Please provide both Project URL and Anon Key.");
+      toast.error(t("toast.creds.missing"));
       return;
     }
 
@@ -69,16 +71,16 @@ const BackendModal = ({
         setStatus("success");
         setStatusMessage(result.message);
         onConnected();
-        toast.success("Backend connected — Sovereign Mode: Online 🟢");
+        toast.success(t("toast.connected"));
       } else {
         setStatus("error");
         setStatusMessage(result.message);
-        toast.error("Connection failed. Check your credentials.");
+        toast.error(t("toast.connect.failed"));
       }
     } catch {
       setStatus("error");
       setStatusMessage("Unexpected error during connection.");
-      toast.error("Connection failed.");
+      toast.error(t("toast.connect.failed"));
     } finally {
       setIsConnecting(false);
     }
@@ -91,7 +93,7 @@ const BackendModal = ({
     setStatus("idle");
     setStatusMessage("");
     onDisconnected();
-    toast("Backend disconnected.");
+    toast(t("toast.disconnected"));
   };
 
   return (
@@ -100,37 +102,39 @@ const BackendModal = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Database className="h-5 w-5 text-primary" />
-            Backend Connection
+            {t("backend.title")}
           </DialogTitle>
           <DialogDescription>
-            Connect your Supabase project to enable database, auth, and storage.
+            {t("backend.description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label htmlFor="supabase-url">Project URL</Label>
+            <Label htmlFor="supabase-url">{t("backend.url")}</Label>
             <Input
               id="supabase-url"
-              placeholder="https://your-project.supabase.co"
+              placeholder={t("backend.url.placeholder")}
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               disabled={isConnecting}
+              dir="ltr"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="supabase-key">Anon Key</Label>
+            <Label htmlFor="supabase-key">{t("backend.key")}</Label>
             <Input
               id="supabase-key"
               type="password"
-              placeholder="eyJhbGciOiJIUzI1NiIs..."
+              placeholder={t("backend.key.placeholder")}
               value={anonKey}
               onChange={(e) => setAnonKey(e.target.value)}
               disabled={isConnecting}
+              dir="ltr"
             />
             <p className="text-xs text-muted-foreground">
-              Found in Supabase → Settings → API → anon public key
+              {t("backend.key.hint")}
             </p>
           </div>
 
@@ -159,7 +163,7 @@ const BackendModal = ({
               onClick={handleDisconnect}
               className="text-destructive border-destructive/30 hover:bg-destructive/10"
             >
-              Disconnect
+              {t("backend.disconnect")}
             </Button>
           )}
           <Button
@@ -169,13 +173,13 @@ const BackendModal = ({
           >
             {isConnecting ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Connecting...
+                <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                {t("backend.connecting")}
               </>
             ) : isConnected ? (
-              "Reconnect"
+              t("backend.reconnect")
             ) : (
-              "Connect"
+              t("backend.connect")
             )}
           </Button>
         </DialogFooter>

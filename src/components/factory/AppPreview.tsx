@@ -6,6 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useI18n } from "@/lib/i18n";
 
 interface AppPreviewProps {
   isGenerated: boolean;
@@ -23,6 +24,7 @@ const viewWidths: Record<ViewMode, string> = {
 const AppPreview = ({ isGenerated, appName }: AppPreviewProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>("desktop");
   const [showCode, setShowCode] = useState(false);
+  const { t } = useI18n();
 
   return (
     <motion.div
@@ -35,7 +37,7 @@ const AppPreview = ({ isGenerated, appName }: AppPreviewProps) => {
         <div className="flex items-center gap-2">
           <Eye className="h-5 w-5 text-accent" />
           <h2 className="text-lg font-semibold text-foreground">
-            Live Preview
+            {t("preview.title")}
           </h2>
           <Tooltip>
             <TooltipTrigger>
@@ -44,10 +46,7 @@ const AppPreview = ({ isGenerated, appName }: AppPreviewProps) => {
               </span>
             </TooltipTrigger>
             <TooltipContent>
-              <p className="max-w-xs text-sm">
-                See your app before building. Switch between device sizes to
-                test responsiveness.
-              </p>
+              <p className="max-w-xs text-sm">{t("preview.tooltip")}</p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -90,10 +89,8 @@ const AppPreview = ({ isGenerated, appName }: AppPreviewProps) => {
         {!isGenerated ? (
           <div className="flex flex-col items-center justify-center h-[400px] text-muted-foreground">
             <Monitor className="h-16 w-16 mb-4 opacity-20" />
-            <p className="text-sm">Your app preview will appear here</p>
-            <p className="text-xs mt-1 opacity-60">
-              Enter an idea and click Generate
-            </p>
+            <p className="text-sm">{t("preview.empty")}</p>
+            <p className="text-xs mt-1 opacity-60">{t("preview.hint")}</p>
           </div>
         ) : showCode ? (
           <div className="h-[400px] overflow-auto p-4 bg-sidebar text-sidebar-foreground font-mono text-xs leading-relaxed">

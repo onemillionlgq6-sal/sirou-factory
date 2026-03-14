@@ -5,6 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useI18n } from "@/lib/i18n";
 
 export interface ActionNotification {
   id: string;
@@ -21,38 +22,40 @@ interface TransparencyCenterProps {
   onReject: (id: string) => void;
 }
 
-const levelConfig = {
-  safe: {
-    icon: CheckCircle2,
-    label: "Safe",
-    emoji: "🟢",
-    bg: "bg-sf-safe/10",
-    border: "border-sf-safe/30",
-    text: "text-sf-safe",
-  },
-  caution: {
-    icon: AlertTriangle,
-    label: "Needs Review",
-    emoji: "🟡",
-    bg: "bg-sf-caution/10",
-    border: "border-sf-caution/30",
-    text: "text-sf-caution",
-  },
-  danger: {
-    icon: XCircle,
-    label: "Sensitive",
-    emoji: "🔴",
-    bg: "bg-sf-danger/10",
-    border: "border-sf-danger/30",
-    text: "text-sf-danger",
-  },
-};
-
 const TransparencyCenter = ({
   notifications,
   onApprove,
   onReject,
 }: TransparencyCenterProps) => {
+  const { t } = useI18n();
+
+  const levelConfig = {
+    safe: {
+      icon: CheckCircle2,
+      label: t("transparency.safe"),
+      emoji: "🟢",
+      bg: "bg-sf-safe/10",
+      border: "border-sf-safe/30",
+      text: "text-sf-safe",
+    },
+    caution: {
+      icon: AlertTriangle,
+      label: t("transparency.caution"),
+      emoji: "🟡",
+      bg: "bg-sf-caution/10",
+      border: "border-sf-caution/30",
+      text: "text-sf-caution",
+    },
+    danger: {
+      icon: XCircle,
+      label: t("transparency.danger"),
+      emoji: "🔴",
+      bg: "bg-sf-danger/10",
+      border: "border-sf-danger/30",
+      text: "text-sf-danger",
+    },
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -63,7 +66,7 @@ const TransparencyCenter = ({
       <div className="flex items-center gap-2 mb-4">
         <Shield className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-semibold text-foreground">
-          Transparency & Sovereignty Center
+          {t("transparency.title")}
         </h2>
         <Tooltip>
           <TooltipTrigger>
@@ -72,10 +75,7 @@ const TransparencyCenter = ({
             </span>
           </TooltipTrigger>
           <TooltipContent>
-            <p className="max-w-xs text-sm">
-              Every action is classified by risk. Red actions need your explicit
-              approval before execution.
-            </p>
+            <p className="max-w-xs text-sm">{t("transparency.tooltip")}</p>
           </TooltipContent>
         </Tooltip>
       </div>
@@ -102,7 +102,7 @@ const TransparencyCenter = ({
           {notifications.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm">
               <Clock className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              No actions yet. Generate an app to see the action plan.
+              {t("transparency.empty")}
             </div>
           ) : (
             notifications.map((n, i) => {
@@ -132,24 +132,24 @@ const TransparencyCenter = ({
                         onClick={() => onApprove(n.id)}
                         className="text-xs px-3 py-1 rounded-lg bg-sf-safe/20 text-sf-safe hover:bg-sf-safe/30 font-medium transition-colors"
                       >
-                        Approve
+                        {t("transparency.approve")}
                       </button>
                       <button
                         onClick={() => onReject(n.id)}
                         className="text-xs px-3 py-1 rounded-lg bg-sf-danger/20 text-sf-danger hover:bg-sf-danger/30 font-medium transition-colors"
                       >
-                        Reject
+                        {t("transparency.reject")}
                       </button>
                     </div>
                   )}
                   {n.approved === true && (
                     <span className="text-xs text-sf-safe font-medium">
-                      ✓ Approved
+                      {t("transparency.approved")}
                     </span>
                   )}
                   {n.approved === false && (
                     <span className="text-xs text-sf-danger font-medium">
-                      ✗ Rejected
+                      {t("transparency.rejected")}
                     </span>
                   )}
                 </motion.div>

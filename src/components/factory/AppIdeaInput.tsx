@@ -8,21 +8,23 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useI18n } from "@/lib/i18n";
 
 interface AppIdeaInputProps {
   onGenerate: (idea: string) => void;
   isGenerating: boolean;
 }
 
-const suggestions = [
-  "A task manager with drag-and-drop boards",
-  "An e-commerce store with product filtering",
-  "A real-time chat application with rooms",
-  "A personal portfolio with blog section",
-];
-
 const AppIdeaInput = ({ onGenerate, isGenerating }: AppIdeaInputProps) => {
   const [idea, setIdea] = useState("");
+  const { t } = useI18n();
+
+  const suggestions = [
+    t("idea.suggestion1"),
+    t("idea.suggestion2"),
+    t("idea.suggestion3"),
+    t("idea.suggestion4"),
+  ];
 
   return (
     <motion.div
@@ -33,7 +35,7 @@ const AppIdeaInput = ({ onGenerate, isGenerating }: AppIdeaInputProps) => {
     >
       <div className="flex items-center gap-2 mb-4">
         <Lightbulb className="h-5 w-5 text-sf-caution" />
-        <h2 className="text-lg font-semibold text-foreground">App Idea</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t("idea.title")}</h2>
         <Tooltip>
           <TooltipTrigger>
             <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full cursor-help">
@@ -41,10 +43,7 @@ const AppIdeaInput = ({ onGenerate, isGenerating }: AppIdeaInputProps) => {
             </span>
           </TooltipTrigger>
           <TooltipContent>
-            <p className="max-w-xs text-sm">
-              Describe what you want to build. Be specific about features,
-              design style, and target audience for best results.
-            </p>
+            <p className="max-w-xs text-sm">{t("idea.tooltip")}</p>
           </TooltipContent>
         </Tooltip>
       </div>
@@ -52,7 +51,7 @@ const AppIdeaInput = ({ onGenerate, isGenerating }: AppIdeaInputProps) => {
       <Textarea
         value={idea}
         onChange={(e) => setIdea(e.target.value)}
-        placeholder="Describe your application idea in detail..."
+        placeholder={t("idea.placeholder")}
         className="min-h-[120px] resize-none bg-sf-surface-elevated border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/30 transition-all"
       />
 
@@ -83,7 +82,7 @@ const AppIdeaInput = ({ onGenerate, isGenerating }: AppIdeaInputProps) => {
               className="flex items-center gap-2"
             >
               <Sparkles className="h-5 w-5 animate-pulse" />
-              Generating...
+              {t("idea.generating")}
             </motion.span>
           ) : (
             <motion.span
@@ -94,7 +93,7 @@ const AppIdeaInput = ({ onGenerate, isGenerating }: AppIdeaInputProps) => {
               className="flex items-center gap-2"
             >
               <Sparkles className="h-5 w-5" />
-              Generate App
+              {t("idea.generate")}
             </motion.span>
           )}
         </AnimatePresence>
