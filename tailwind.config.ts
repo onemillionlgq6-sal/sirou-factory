@@ -13,7 +13,27 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
+      },
       colors: {
+        "sf-safe": {
+          DEFAULT: "hsl(var(--sf-safe))",
+          foreground: "hsl(var(--sf-safe-foreground))",
+        },
+        "sf-caution": {
+          DEFAULT: "hsl(var(--sf-caution))",
+          foreground: "hsl(var(--sf-caution-foreground))",
+        },
+        "sf-danger": {
+          DEFAULT: "hsl(var(--sf-danger))",
+          foreground: "hsl(var(--sf-danger-foreground))",
+        },
+        "sf-surface": {
+          DEFAULT: "hsl(var(--sf-surface))",
+          elevated: "hsl(var(--sf-surface-elevated))",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
