@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import BackendModal from "@/components/factory/BackendModal";
+import { useI18n } from "@/lib/i18n";
 
 interface FactoryActionsProps {
   isGenerated: boolean;
@@ -34,6 +35,7 @@ const FactoryActions = ({
   onBackendDisconnected,
 }: FactoryActionsProps) => {
   const [backendOpen, setBackendOpen] = useState(false);
+  const { t } = useI18n();
 
   return (
     <>
@@ -44,7 +46,7 @@ const FactoryActions = ({
         className="sf-glass rounded-2xl p-6"
       >
         <h2 className="text-lg font-semibold text-foreground mb-4">
-          Factory Controls
+          {t("controls.title")}
         </h2>
 
         <div className="grid grid-cols-2 gap-3">
@@ -55,13 +57,11 @@ const FactoryActions = ({
                 disabled={!isGenerated}
                 className="h-14 rounded-xl sf-gradient-bg text-primary-foreground font-semibold hover:opacity-90 transition-opacity disabled:opacity-30"
               >
-                <Upload className="h-5 w-5 mr-2" />
-                Publish App
+                <Upload className="h-5 w-5 me-2" />
+                {t("controls.publish")}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>
-              Deploy your app to production with one click
-            </TooltipContent>
+            <TooltipContent>{t("controls.publish.tooltip")}</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -71,13 +71,11 @@ const FactoryActions = ({
                 variant="outline"
                 className="h-14 rounded-xl border-border hover:bg-muted font-semibold"
               >
-                <Download className="h-5 w-5 mr-2" />
-                Full System Export
+                <Download className="h-5 w-5 me-2" />
+                {t("controls.export")}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>
-              Export code, Docker files, and Nginx config for self-hosting
-            </TooltipContent>
+            <TooltipContent>{t("controls.export.tooltip")}</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -86,13 +84,11 @@ const FactoryActions = ({
                 variant="outline"
                 className="h-14 rounded-xl border-border hover:bg-muted"
               >
-                <Key className="h-5 w-5 mr-2" />
-                API Keys
+                <Key className="h-5 w-5 me-2" />
+                {t("controls.apikeys")}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>
-              Securely manage OpenAI, Anthropic, and other API keys
-            </TooltipContent>
+            <TooltipContent>{t("controls.apikeys.tooltip")}</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -101,13 +97,11 @@ const FactoryActions = ({
                 variant="outline"
                 className="h-14 rounded-xl border-border hover:bg-muted"
               >
-                <Puzzle className="h-5 w-5 mr-2" />
-                Plugins
+                <Puzzle className="h-5 w-5 me-2" />
+                {t("controls.plugins")}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>
-              Add Auth, Payments, Maps, Analytics, and more
-            </TooltipContent>
+            <TooltipContent>{t("controls.plugins.tooltip")}</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -121,14 +115,16 @@ const FactoryActions = ({
                     : ""
                 }`}
               >
-                <Database className="h-5 w-5 mr-2" />
-                {isBackendConnected ? "Backend ✓" : "Backend"}
+                <Database className="h-5 w-5 me-2" />
+                {isBackendConnected
+                  ? t("controls.backend.connected")
+                  : t("controls.backend")}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
               {isBackendConnected
-                ? "Connected — click to manage"
-                : "Connect your Supabase backend"}
+                ? t("controls.backend.tooltip.connected")
+                : t("controls.backend.tooltip.disconnected")}
             </TooltipContent>
           </Tooltip>
 
@@ -138,13 +134,11 @@ const FactoryActions = ({
                 variant="outline"
                 className="h-14 rounded-xl border-border hover:bg-muted"
               >
-                <Settings className="h-5 w-5 mr-2" />
-                Settings
+                <Settings className="h-5 w-5 me-2" />
+                {t("controls.settings")}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>
-              Factory preferences and learning log
-            </TooltipContent>
+            <TooltipContent>{t("controls.settings.tooltip")}</TooltipContent>
           </Tooltip>
         </div>
       </motion.div>
