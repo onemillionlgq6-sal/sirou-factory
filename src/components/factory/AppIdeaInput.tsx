@@ -34,11 +34,11 @@ const AppIdeaInput = ({ onGenerate, isGenerating }: AppIdeaInputProps) => {
       className="sf-glass rounded-2xl p-6 sf-glow"
     >
       <div className="flex items-center gap-2 mb-4">
-        <Lightbulb className="h-5 w-5 text-sf-caution" />
+        <Lightbulb className="h-5 w-5 text-accent" />
         <h2 className="text-lg font-semibold text-foreground">{t("idea.title")}</h2>
         <Tooltip>
           <TooltipTrigger>
-            <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full cursor-help">
+            <span className="text-xs sf-glass-subtle text-muted-foreground px-2 py-0.5 rounded-full cursor-help">
               ?
             </span>
           </TooltipTrigger>
@@ -52,7 +52,7 @@ const AppIdeaInput = ({ onGenerate, isGenerating }: AppIdeaInputProps) => {
         value={idea}
         onChange={(e) => setIdea(e.target.value)}
         placeholder={t("idea.placeholder")}
-        className="min-h-[120px] resize-none bg-sf-surface-elevated border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/30 transition-all"
+        className="min-h-[120px] resize-none sf-glass-subtle border-foreground/15 rounded-xl text-foreground placeholder:text-foreground/40 focus:ring-2 focus:ring-accent/30 transition-all"
       />
 
       <div className="flex flex-wrap gap-2 mt-3">
@@ -60,7 +60,7 @@ const AppIdeaInput = ({ onGenerate, isGenerating }: AppIdeaInputProps) => {
           <button
             key={s}
             onClick={() => setIdea(s)}
-            className="text-xs px-3 py-1.5 rounded-full bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+            className="text-xs px-3 py-1.5 rounded-full sf-glass-subtle text-muted-foreground hover:text-foreground hover:sf-glass-strong transition-all"
           >
             {s}
           </button>

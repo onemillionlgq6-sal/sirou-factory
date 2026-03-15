@@ -5,66 +5,82 @@ import TransparencyCenter from "@/components/factory/TransparencyCenter";
 import type { ActionNotification } from "@/components/factory/TransparencyCenter";
 import AppPreview from "@/components/factory/AppPreview";
 import FactoryActions from "@/components/factory/FactoryActions";
+import AIPlannerEngine from "@/components/factory/AIPlannerEngine";
+import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
+import InteractiveBlueprint from "@/components/factory/InteractiveBlueprint";
+import AppBuilderEngine from "@/components/factory/AppBuilderEngine";
 import { toast } from "sonner";
 import { getStoredCredentials } from "@/lib/supabase";
 import { useI18n } from "@/lib/i18n";
+import factoryBg from "@/assets/factory-bg.jpg";
+
+type Phase = "idea" | "planning" | "blueprint" | "building" | "complete";
 
 const Index = () => {
   const { t } = useI18n();
   const [notifications, setNotifications] = useState<ActionNotification[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isGenerated, setIsGenerated] = useState(false);
+  const [phase, setPhase] = useState<Phase>("idea");
+  const [idea, setIdea] = useState("");
+  const [isPlanning, setIsPlanning] = useState(false);
+  const [blueprint, setBlueprint] = useState<AppBlueprint | null>(null);
   const [appName, setAppName] = useState("");
   const [isBackendConnected, setIsBackendConnected] = useState(
     () => !!getStoredCredentials()
   );
 
-  const handleGenerate = useCallback((idea: string) => {
-    setIsGenerating(true);
-    setAppName(idea.split(" ").slice(0, 4).join(" "));
+  const handleGenerate = useCallback((ideaText: string) => {
+    setIdea(ideaText);
+    setAppName(ideaText.split(" ").slice(0, 4).join(" "));
+    setPhase("planning");
+  }, []);
 
-    setTimeout(() => {
-      setNotifications([
-        {
-          id: "1",
-          level: "safe",
-          title: t("plan.scaffold.title"),
-          description: `${t("plan.scaffold.desc")} "${idea.slice(0, 50)}..."`,
-          timestamp: new Date(),
-        },
-        {
-          id: "2",
-          level: "safe",
-          title: t("plan.tailwind.title"),
-          description: t("plan.tailwind.desc"),
-          timestamp: new Date(),
-        },
-        {
-          id: "3",
-          level: "caution",
-          title: t("plan.db.title"),
-          description: t("plan.db.desc"),
-          timestamp: new Date(),
-        },
-        {
-          id: "4",
-          level: "caution",
-          title: t("plan.auth.title"),
-          description: t("plan.auth.desc"),
-          timestamp: new Date(),
-        },
-        {
-          id: "5",
-          level: "danger",
-          title: t("plan.api.title"),
-          description: t("plan.api.desc"),
-          timestamp: new Date(),
-        },
-      ]);
-      setIsGenerating(false);
-      setIsGenerated(true);
-      toast.success(t("toast.plan.generated"));
-    }, 1500);
+  const handleBlueprintReady = useCallback((bp: AppBlueprint) => {
+    setBlueprint(bp);
+    setPhase("blueprint");
+
+    // Generate transparency notifications from blueprint
+    const notifs: ActionNotification[] = bp.features.map((f, i) => ({
+      id: String(i + 1),
+      level: f.risk,
+      title: f.name,
+      description: f.category === "external"
+        ? t("plan.api.desc")
+        : f.category === "plugin"
+        ? t("plan.db.desc")
+        : t("plan.tailwind.desc"),
+      approved: f.risk === "safe" ? true : undefined,
+      timestamp: new Date(),
+    }));
+    setNotifications(notifs);
+    toast.success(t("toast.plan.generated"));
+  }, [t]);
+
+  const handleBlueprintApprove = useCallback((bp: AppBlueprint) => {
+    setBlueprint(bp);
+    setPhase("building");
+
+    // Auto-approve all notifications for approved features
+    setNotifications((prev) =>
+      prev.map((n) => {
+        const feature = bp.features.find((f) => f.name === n.title);
+        if (feature?.approved) return { ...n, approved: true };
+        if (feature && !feature.approved) return { ...n, approved: false };
+        return n;
+      })
+    );
+    toast.success(t("blueprint.building"));
+  }, [t]);
+
+  const handleBlueprintReject = useCallback(() => {
+    setPhase("idea");
+    setBlueprint(null);
+    setNotifications([]);
+    toast(t("blueprint.rejected"));
+  }, [t]);
+
+  const handleBuildComplete = useCallback(() => {
+    setPhase("complete");
+    toast.success(t("toast.published"));
   }, [t]);
 
   const handleApprove = useCallback((id: string) => {
@@ -105,33 +121,93 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <FactoryHeader isBackendConnected={isBackendConnected} />
+    <div
+      className="min-h-screen bg-cover bg-center bg-fixed"
+      style={{ backgroundImage: `url(${factoryBg})` }}
+    >
+      {/* Dark overlay for readability */}
+      <div className="min-h-screen bg-black/30 backdrop-blur-[2px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FactoryHeader isBackendConnected={isBackendConnected} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
-          <div className="space-y-6">
-            <AppIdeaInput
-              onGenerate={handleGenerate}
-              isGenerating={isGenerating}
-            />
-            <TransparencyCenter
-              notifications={notifications}
-              onApprove={handleApprove}
-              onReject={handleReject}
-            />
+          {/* Pipeline indicator */}
+          <div className="flex items-center justify-center gap-2 mb-6">
+            {(["idea", "planning", "blueprint", "building", "complete"] as Phase[]).map((p, i) => (
+              <div key={p} className="flex items-center gap-2">
+                <div
+                  className={`h-2.5 w-2.5 rounded-full transition-all ${
+                    phase === p
+                      ? "sf-gradient-bg scale-125 sf-glow-green"
+                      : ["idea", "planning", "blueprint", "building", "complete"].indexOf(phase) > i
+                      ? "bg-sf-safe"
+                      : "bg-foreground/20"
+                  }`}
+                />
+                {i < 4 && (
+                  <div
+                    className={`h-px w-8 transition-all ${
+                      ["idea", "planning", "blueprint", "building", "complete"].indexOf(phase) > i
+                        ? "bg-sf-safe"
+                        : "bg-foreground/20"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
           </div>
 
-          <div className="space-y-6">
-            <AppPreview isGenerated={isGenerated} appName={appName} />
-            <FactoryActions
-              isGenerated={isGenerated}
-              onPublish={handlePublish}
-              onExport={handleExport}
-              isBackendConnected={isBackendConnected}
-              onBackendConnected={handleBackendConnected}
-              onBackendDisconnected={handleBackendDisconnected}
-            />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
+            <div className="space-y-6">
+              {/* Left column: Idea → Planner → Blueprint */}
+              {(phase === "idea" || phase === "planning") && (
+                <AppIdeaInput
+                  onGenerate={handleGenerate}
+                  isGenerating={isPlanning}
+                />
+              )}
+
+              {(phase === "planning" || phase === "blueprint") && (
+                <AIPlannerEngine
+                  idea={idea}
+                  onBlueprintReady={handleBlueprintReady}
+                  isPlanning={isPlanning}
+                  setIsPlanning={setIsPlanning}
+                />
+              )}
+
+              {phase === "blueprint" && blueprint && (
+                <InteractiveBlueprint
+                  blueprint={blueprint}
+                  onApprove={handleBlueprintApprove}
+                  onReject={handleBlueprintReject}
+                />
+              )}
+
+              {phase === "building" && blueprint && (
+                <AppBuilderEngine
+                  blueprint={blueprint}
+                  onComplete={handleBuildComplete}
+                />
+              )}
+
+              <TransparencyCenter
+                notifications={notifications}
+                onApprove={handleApprove}
+                onReject={handleReject}
+              />
+            </div>
+
+            <div className="space-y-6">
+              <AppPreview isGenerated={phase === "complete"} appName={appName} />
+              <FactoryActions
+                isGenerated={phase === "complete"}
+                onPublish={handlePublish}
+                onExport={handleExport}
+                isBackendConnected={isBackendConnected}
+                onBackendConnected={handleBackendConnected}
+                onBackendDisconnected={handleBackendDisconnected}
+              />
+            </div>
           </div>
         </div>
       </div>
