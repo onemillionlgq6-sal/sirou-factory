@@ -34,7 +34,7 @@ const TransparencyCenter = ({
       icon: CheckCircle2,
       label: t("transparency.safe"),
       emoji: "🟢",
-      bg: "bg-sf-safe/10",
+      bg: "bg-sf-safe/15",
       border: "border-sf-safe/30",
       text: "text-sf-safe",
     },
@@ -42,7 +42,7 @@ const TransparencyCenter = ({
       icon: AlertTriangle,
       label: t("transparency.caution"),
       emoji: "🟡",
-      bg: "bg-sf-caution/10",
+      bg: "bg-sf-caution/15",
       border: "border-sf-caution/30",
       text: "text-sf-caution",
     },
@@ -50,7 +50,7 @@ const TransparencyCenter = ({
       icon: XCircle,
       label: t("transparency.danger"),
       emoji: "🔴",
-      bg: "bg-sf-danger/10",
+      bg: "bg-sf-danger/15",
       border: "border-sf-danger/30",
       text: "text-sf-danger",
     },
@@ -64,13 +64,13 @@ const TransparencyCenter = ({
       className="sf-glass rounded-2xl p-6"
     >
       <div className="flex items-center gap-2 mb-4">
-        <Shield className="h-5 w-5 text-primary" />
+        <Shield className="h-5 w-5 text-accent" />
         <h2 className="text-lg font-semibold text-foreground">
           {t("transparency.title")}
         </h2>
         <Tooltip>
           <TooltipTrigger>
-            <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full cursor-help">
+            <span className="text-xs sf-glass-subtle text-muted-foreground px-2 py-0.5 rounded-full cursor-help">
               ?
             </span>
           </TooltipTrigger>
@@ -97,7 +97,7 @@ const TransparencyCenter = ({
         })}
       </div>
 
-      <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+      <div className="space-y-2 max-h-[320px] overflow-y-auto pe-1">
         <AnimatePresence>
           {notifications.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-sm">
@@ -115,7 +115,7 @@ const TransparencyCenter = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 10 }}
                   transition={{ delay: i * 0.05 }}
-                  className={`flex items-start gap-3 p-3 rounded-xl border ${config.border} ${config.bg}`}
+                  className={`flex items-start gap-3 p-3 rounded-xl sf-glass-subtle border ${config.border}`}
                 >
                   <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${config.text}`} />
                   <div className="flex-1 min-w-0">

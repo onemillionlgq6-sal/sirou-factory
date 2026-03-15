@@ -22,7 +22,7 @@ const FactoryHeader = ({ isBackendConnected = false }: FactoryHeaderProps) => {
       className="flex items-center justify-between py-6"
     >
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl sf-gradient-bg flex items-center justify-center">
+        <div className="h-10 w-10 rounded-xl sf-gradient-bg flex items-center justify-center sf-glow-green">
           <Factory className="h-5 w-5 text-primary-foreground" />
         </div>
         <div>
@@ -42,7 +42,7 @@ const FactoryHeader = ({ isBackendConnected = false }: FactoryHeaderProps) => {
               variant="outline"
               size="sm"
               onClick={() => setLang(lang === "en" ? "ar" : "en")}
-              className="rounded-full px-3 py-1.5 h-auto text-xs font-medium border-border hover:bg-muted gap-1.5"
+              className="rounded-full px-3 py-1.5 h-auto text-xs font-medium sf-glass-subtle text-foreground hover:sf-glass-strong gap-1.5 border-foreground/20"
             >
               <Languages className="h-3.5 w-3.5" />
               {lang === "en" ? "عربي" : "English"}
@@ -54,16 +54,16 @@ const FactoryHeader = ({ isBackendConnected = false }: FactoryHeaderProps) => {
         </Tooltip>
 
         <div
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
             isBackendConnected
-              ? "bg-sf-safe/10 text-sf-safe border-sf-safe/20"
-              : "bg-muted text-muted-foreground border-border"
+              ? "sf-glass-subtle text-sf-safe border border-sf-safe/30"
+              : "sf-glass-subtle text-muted-foreground border border-foreground/20"
           }`}
         >
           <Shield className="h-3.5 w-3.5" />
           {isBackendConnected ? t("sovereign.online") : t("sovereign.offline")}
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full sf-glass-subtle text-accent text-xs font-medium border border-accent/30">
           <Zap className="h-3.5 w-3.5" />
           {t("oversight.active")}
         </div>

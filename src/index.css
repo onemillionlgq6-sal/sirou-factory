@@ -7,36 +7,36 @@
 @layer base {
   :root {
     --background: 210 20% 98%;
-    --foreground: 220 25% 10%;
+    --foreground: 0 0% 100%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
+    --card-foreground: 0 0% 100%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 220 25% 10%;
 
-    --primary: 210 70% 45%;
+    --primary: 90 60% 50%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 15% 93%;
-    --secondary-foreground: 220 25% 20%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 15% 95%;
-    --muted-foreground: 215 15% 50%;
+    --muted: 0 0% 100%;
+    --muted-foreground: 0 0% 85%;
 
-    --accent: 175 60% 40%;
+    --accent: 55 90% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
-    --ring: 210 70% 45%;
+    --border: 0 0% 100%;
+    --input: 0 0% 100%;
+    --ring: 90 60% 50%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Sirou Factory custom tokens */
+    /* Sirou Factory Glassmorphism tokens */
     --sf-safe: 142 60% 42%;
     --sf-safe-foreground: 0 0% 100%;
     --sf-caution: 43 96% 50%;
@@ -45,51 +45,28 @@
     --sf-danger-foreground: 0 0% 100%;
 
     --sf-surface: 0 0% 100%;
-    --sf-surface-elevated: 210 25% 97%;
-    --sf-gradient-start: 210 70% 45%;
-    --sf-gradient-end: 175 60% 40%;
+    --sf-surface-elevated: 0 0% 100%;
+    --sf-gradient-start: 55 90% 50%;
+    --sf-gradient-end: 90 70% 45%;
 
     --sidebar-background: 220 25% 8%;
     --sidebar-foreground: 210 15% 85%;
-    --sidebar-primary: 210 70% 55%;
+    --sidebar-primary: 90 60% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 20% 14%;
     --sidebar-accent-foreground: 210 15% 85%;
     --sidebar-border: 220 20% 16%;
-    --sidebar-ring: 210 70% 55%;
-  }
-
-  .dark {
-    --background: 220 25% 6%;
-    --foreground: 210 15% 92%;
-    --card: 220 22% 10%;
-    --card-foreground: 210 15% 92%;
-    --popover: 220 22% 10%;
-    --popover-foreground: 210 15% 92%;
-    --primary: 210 70% 55%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 20% 16%;
-    --secondary-foreground: 210 15% 85%;
-    --muted: 220 20% 14%;
-    --muted-foreground: 215 15% 55%;
-    --accent: 175 60% 45%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 220 20% 16%;
-    --input: 220 20% 16%;
-    --ring: 210 70% 55%;
-    --sf-surface: 220 22% 10%;
-    --sf-surface-elevated: 220 20% 14%;
+    --sidebar-ring: 90 60% 55%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border/20;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply text-foreground font-sans antialiased;
+    background: transparent;
   }
 }
 
@@ -102,9 +79,27 @@
     background: linear-gradient(135deg, hsl(var(--sf-gradient-start)), hsl(var(--sf-gradient-end)));
   }
   .sf-glass {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+    background: hsla(0, 0%, 100%, 0.12);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid hsla(0, 0%, 100%, 0.25);
+  }
+  .sf-glass-strong {
+    background: hsla(0, 0%, 100%, 0.18);
+    backdrop-filter: blur(32px) saturate(1.5);
+    -webkit-backdrop-filter: blur(32px) saturate(1.5);
+    border: 1px solid hsla(0, 0%, 100%, 0.35);
+  }
+  .sf-glass-subtle {
+    background: hsla(0, 0%, 100%, 0.08);
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    border: 1px solid hsla(0, 0%, 100%, 0.15);
   }
   .sf-glow {
-    box-shadow: 0 0 30px -5px hsl(var(--primary) / 0.15);
+    box-shadow: 0 8px 32px -8px hsla(90, 60%, 50%, 0.2), 0 0 0 1px hsla(0, 0%, 100%, 0.1);
+  }
+  .sf-glow-green {
+    box-shadow: 0 0 30px -5px hsla(90, 60%, 50%, 0.4);
   }
 }

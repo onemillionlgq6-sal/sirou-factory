@@ -69,7 +69,7 @@ const FactoryActions = ({
               <Button
                 onClick={onExport}
                 variant="outline"
-                className="h-14 rounded-xl border-border hover:bg-muted font-semibold"
+                className="h-14 rounded-xl sf-glass-subtle border-foreground/20 text-foreground hover:sf-glass-strong font-semibold"
               >
                 <Download className="h-5 w-5 me-2" />
                 {t("controls.export")}
@@ -82,7 +82,7 @@ const FactoryActions = ({
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
-                className="h-14 rounded-xl border-border hover:bg-muted"
+                className="h-14 rounded-xl sf-glass-subtle border-foreground/20 text-foreground hover:sf-glass-strong"
               >
                 <Key className="h-5 w-5 me-2" />
                 {t("controls.apikeys")}
@@ -95,7 +95,7 @@ const FactoryActions = ({
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
-                className="h-14 rounded-xl border-border hover:bg-muted"
+                className="h-14 rounded-xl sf-glass-subtle border-foreground/20 text-foreground hover:sf-glass-strong"
               >
                 <Puzzle className="h-5 w-5 me-2" />
                 {t("controls.plugins")}
@@ -109,9 +109,9 @@ const FactoryActions = ({
               <Button
                 variant="outline"
                 onClick={() => setBackendOpen(true)}
-                className={`h-14 rounded-xl border-border hover:bg-muted ${
+                className={`h-14 rounded-xl sf-glass-subtle border-foreground/20 text-foreground hover:sf-glass-strong ${
                   isBackendConnected
-                    ? "border-sf-safe/40 bg-sf-safe/5 text-sf-safe"
+                    ? "border-sf-safe/40 text-sf-safe"
                     : ""
                 }`}
               >
@@ -132,7 +132,7 @@ const FactoryActions = ({
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
-                className="h-14 rounded-xl border-border hover:bg-muted"
+                className="h-14 rounded-xl sf-glass-subtle border-foreground/20 text-foreground hover:sf-glass-strong"
               >
                 <Settings className="h-5 w-5 me-2" />
                 {t("controls.settings")}
