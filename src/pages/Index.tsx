@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import FactoryHeader from "@/components/factory/FactoryHeader";
 import AppIdeaInput from "@/components/factory/AppIdeaInput";
 import TransparencyCenter from "@/components/factory/TransparencyCenter";
@@ -9,9 +9,12 @@ import AIPlannerEngine from "@/components/factory/AIPlannerEngine";
 import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
 import InteractiveBlueprint from "@/components/factory/InteractiveBlueprint";
 import AppBuilderEngine from "@/components/factory/AppBuilderEngine";
+import HealthDashboard from "@/components/factory/HealthDashboard";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { toast } from "sonner";
 import { getStoredCredentials } from "@/lib/supabase";
 import { useI18n } from "@/lib/i18n";
+import { initGlobalErrorHandlers } from "@/lib/health-monitor";
 import factoryBg from "@/assets/factory-bg.jpg";
 
 type Phase = "idea" | "planning" | "blueprint" | "building" | "complete";
@@ -27,6 +30,10 @@ const Index = () => {
   const [isBackendConnected, setIsBackendConnected] = useState(
     () => !!getStoredCredentials()
   );
+
+  useEffect(() => {
+    initGlobalErrorHandlers();
+  }, []);
 
   const handleGenerate = useCallback((ideaText: string) => {
     setIdea(ideaText);
@@ -160,53 +167,70 @@ const Index = () => {
             <div className="space-y-6">
               {/* Left column: Idea → Planner → Blueprint */}
               {(phase === "idea" || phase === "planning") && (
-                <AppIdeaInput
-                  onGenerate={handleGenerate}
-                  isGenerating={isPlanning}
-                />
+                <ErrorBoundary moduleName="AppIdeaInput" fallbackTitleAr="خطأ في مدخل الفكرة">
+                  <AppIdeaInput
+                    onGenerate={handleGenerate}
+                    isGenerating={isPlanning}
+                  />
+                </ErrorBoundary>
               )}
 
               {(phase === "planning" || phase === "blueprint") && (
-                <AIPlannerEngine
-                  idea={idea}
-                  onBlueprintReady={handleBlueprintReady}
-                  isPlanning={isPlanning}
-                  setIsPlanning={setIsPlanning}
-                />
+                <ErrorBoundary moduleName="AIPlannerEngine" fallbackTitleAr="خطأ في محرك التخطيط">
+                  <AIPlannerEngine
+                    idea={idea}
+                    onBlueprintReady={handleBlueprintReady}
+                    isPlanning={isPlanning}
+                    setIsPlanning={setIsPlanning}
+                  />
+                </ErrorBoundary>
               )}
 
               {phase === "blueprint" && blueprint && (
-                <InteractiveBlueprint
-                  blueprint={blueprint}
-                  onApprove={handleBlueprintApprove}
-                  onReject={handleBlueprintReject}
-                />
+                <ErrorBoundary moduleName="InteractiveBlueprint" fallbackTitleAr="خطأ في المخطط التفاعلي">
+                  <InteractiveBlueprint
+                    blueprint={blueprint}
+                    onApprove={handleBlueprintApprove}
+                    onReject={handleBlueprintReject}
+                  />
+                </ErrorBoundary>
               )}
 
               {phase === "building" && blueprint && (
-                <AppBuilderEngine
-                  blueprint={blueprint}
-                  onComplete={handleBuildComplete}
-                />
+                <ErrorBoundary moduleName="AppBuilderEngine" fallbackTitleAr="خطأ في محرك البناء">
+                  <AppBuilderEngine
+                    blueprint={blueprint}
+                    onComplete={handleBuildComplete}
+                  />
+                </ErrorBoundary>
               )}
 
-              <TransparencyCenter
-                notifications={notifications}
-                onApprove={handleApprove}
-                onReject={handleReject}
-              />
+              <ErrorBoundary moduleName="TransparencyCenter" fallbackTitleAr="خطأ في مركز الشفافية">
+                <TransparencyCenter
+                  notifications={notifications}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                />
+              </ErrorBoundary>
             </div>
 
             <div className="space-y-6">
-              <AppPreview isGenerated={phase === "complete"} appName={appName} />
-              <FactoryActions
-                isGenerated={phase === "complete"}
-                onPublish={handlePublish}
-                onExport={handleExport}
-                isBackendConnected={isBackendConnected}
-                onBackendConnected={handleBackendConnected}
-                onBackendDisconnected={handleBackendDisconnected}
-              />
+              <ErrorBoundary moduleName="AppPreview" fallbackTitleAr="خطأ في المعاينة">
+                <AppPreview isGenerated={phase === "complete"} appName={appName} />
+              </ErrorBoundary>
+              <ErrorBoundary moduleName="FactoryActions" fallbackTitleAr="خطأ في أدوات التحكم">
+                <FactoryActions
+                  isGenerated={phase === "complete"}
+                  onPublish={handlePublish}
+                  onExport={handleExport}
+                  isBackendConnected={isBackendConnected}
+                  onBackendConnected={handleBackendConnected}
+                  onBackendDisconnected={handleBackendDisconnected}
+                />
+              </ErrorBoundary>
+              <ErrorBoundary moduleName="HealthDashboard" fallbackTitleAr="خطأ في لوحة الصحة">
+                <HealthDashboard />
+              </ErrorBoundary>
             </div>
           </div>
         </div>

@@ -4,7 +4,7 @@ import {
   Upload,
   Download,
   Settings,
-  Key,
+  ShieldCheck,
   Puzzle,
   Database,
 } from "lucide-react";
@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import BackendModal from "@/components/factory/BackendModal";
+import SecureVault from "@/components/factory/SecureVault";
 import { useI18n } from "@/lib/i18n";
 
 interface FactoryActionsProps {
@@ -35,6 +36,7 @@ const FactoryActions = ({
   onBackendDisconnected,
 }: FactoryActionsProps) => {
   const [backendOpen, setBackendOpen] = useState(false);
+  const [vaultOpen, setVaultOpen] = useState(false);
   const { t } = useI18n();
 
   return (
@@ -82,9 +84,10 @@ const FactoryActions = ({
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
+                onClick={() => setVaultOpen(true)}
                 className="h-14 rounded-xl sf-glass-subtle border-foreground/20 text-foreground hover:sf-glass-strong"
               >
-                <Key className="h-5 w-5 me-2" />
+                <ShieldCheck className="h-5 w-5 me-2" />
                 {t("controls.apikeys")}
               </Button>
             </TooltipTrigger>
@@ -150,6 +153,7 @@ const FactoryActions = ({
         onDisconnected={onBackendDisconnected}
         isConnected={isBackendConnected}
       />
+      <SecureVault open={vaultOpen} onOpenChange={setVaultOpen} />
     </>
   );
 };
