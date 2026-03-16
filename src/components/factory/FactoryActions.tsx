@@ -36,6 +36,7 @@ const FactoryActions = ({
   onBackendDisconnected,
 }: FactoryActionsProps) => {
   const [backendOpen, setBackendOpen] = useState(false);
+  const [vaultOpen, setVaultOpen] = useState(false);
   const { t } = useI18n();
 
   return (
