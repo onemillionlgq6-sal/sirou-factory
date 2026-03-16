@@ -134,8 +134,8 @@ export const shareContent = async (opts: { title: string; text?: string; url?: s
         return true;
       }
       // Last resort: copy to clipboard
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(opts.url || opts.text || '');
+      if ((navigator as any).clipboard) {
+        await (navigator as any).clipboard.writeText(opts.url || opts.text || '');
       }
       return true;
     }
