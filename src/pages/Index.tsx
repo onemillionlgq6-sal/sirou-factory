@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import FactoryHeader from "@/components/factory/FactoryHeader";
 import AppIdeaInput from "@/components/factory/AppIdeaInput";
 import TransparencyCenter from "@/components/factory/TransparencyCenter";
@@ -9,9 +9,12 @@ import AIPlannerEngine from "@/components/factory/AIPlannerEngine";
 import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
 import InteractiveBlueprint from "@/components/factory/InteractiveBlueprint";
 import AppBuilderEngine from "@/components/factory/AppBuilderEngine";
+import HealthDashboard from "@/components/factory/HealthDashboard";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { toast } from "sonner";
 import { getStoredCredentials } from "@/lib/supabase";
 import { useI18n } from "@/lib/i18n";
+import { initGlobalErrorHandlers } from "@/lib/health-monitor";
 import factoryBg from "@/assets/factory-bg.jpg";
 
 type Phase = "idea" | "planning" | "blueprint" | "building" | "complete";
