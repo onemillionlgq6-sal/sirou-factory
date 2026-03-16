@@ -289,6 +289,35 @@ const translations = {
     "plan.auth.desc": "تكوين مصادقة Supabase بالبريد الإلكتروني وكلمة المرور. لا موفرين خارجيين بدون موافقة.",
     "plan.api.title": "تم اكتشاف تكامل API خارجي",
     "plan.api.desc": "قد تتطلب فكرتك واجهات برمجة خارجية. لن يتم إرسال أي بيانات بدون موافقتك الصريحة.",
+
+    // Health Dashboard
+    "health.title": "صحة النظام",
+    "health.healthy": "سليم",
+    "health.degraded": "متدهور",
+    "health.critical": "حرج",
+    "health.status": "الحالة",
+    "health.uptime": "وقت التشغيل",
+    "health.errors": "الأخطاء",
+    "health.platform": "المنصة",
+    "health.memory": "الذاكرة",
+    "health.recent.errors": "الأخطاء الأخيرة",
+    "health.clear": "مسح",
+    "health.performance": "الأداء",
+    "health.no.data": "لا توجد بيانات مراقبة بعد — النظام يعمل بسلاسة.",
+
+    // Secure Vault
+    "vault.title": "الخزنة الآمنة",
+    "vault.desc": "خزّن مفاتيح API والشهادات في خزنة معزولة. البيانات تبقى في متصفحك فقط.",
+    "vault.fill.required": "يرجى ملء كل من التسمية والقيمة.",
+    "vault.added": "تمت إضافة السر إلى الخزنة ✓",
+    "vault.removed": "تم حذف السر من الخزنة.",
+    "vault.cat.api": "مفتاح API",
+    "vault.cat.cert": "شهادة",
+    "vault.cat.token": "رمز",
+    "vault.label.placeholder": "التسمية (مثال: مفتاح OpenAI)",
+    "vault.value.placeholder": "القيمة السرية...",
+    "vault.add": "إضافة إلى الخزنة",
+    "vault.empty": "الخزنة فارغة. أضف سرك الأول أعلاه.",
   },
 } as const;
 
