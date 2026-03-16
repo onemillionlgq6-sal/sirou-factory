@@ -167,41 +167,51 @@ const Index = () => {
             <div className="space-y-6">
               {/* Left column: Idea → Planner → Blueprint */}
               {(phase === "idea" || phase === "planning") && (
-                <AppIdeaInput
-                  onGenerate={handleGenerate}
-                  isGenerating={isPlanning}
-                />
+                <ErrorBoundary moduleName="AppIdeaInput" fallbackTitleAr="خطأ في مدخل الفكرة">
+                  <AppIdeaInput
+                    onGenerate={handleGenerate}
+                    isGenerating={isPlanning}
+                  />
+                </ErrorBoundary>
               )}
 
               {(phase === "planning" || phase === "blueprint") && (
-                <AIPlannerEngine
-                  idea={idea}
-                  onBlueprintReady={handleBlueprintReady}
-                  isPlanning={isPlanning}
-                  setIsPlanning={setIsPlanning}
-                />
+                <ErrorBoundary moduleName="AIPlannerEngine" fallbackTitleAr="خطأ في محرك التخطيط">
+                  <AIPlannerEngine
+                    idea={idea}
+                    onBlueprintReady={handleBlueprintReady}
+                    isPlanning={isPlanning}
+                    setIsPlanning={setIsPlanning}
+                  />
+                </ErrorBoundary>
               )}
 
               {phase === "blueprint" && blueprint && (
-                <InteractiveBlueprint
-                  blueprint={blueprint}
-                  onApprove={handleBlueprintApprove}
-                  onReject={handleBlueprintReject}
-                />
+                <ErrorBoundary moduleName="InteractiveBlueprint" fallbackTitleAr="خطأ في المخطط التفاعلي">
+                  <InteractiveBlueprint
+                    blueprint={blueprint}
+                    onApprove={handleBlueprintApprove}
+                    onReject={handleBlueprintReject}
+                  />
+                </ErrorBoundary>
               )}
 
               {phase === "building" && blueprint && (
-                <AppBuilderEngine
-                  blueprint={blueprint}
-                  onComplete={handleBuildComplete}
-                />
+                <ErrorBoundary moduleName="AppBuilderEngine" fallbackTitleAr="خطأ في محرك البناء">
+                  <AppBuilderEngine
+                    blueprint={blueprint}
+                    onComplete={handleBuildComplete}
+                  />
+                </ErrorBoundary>
               )}
 
-              <TransparencyCenter
-                notifications={notifications}
-                onApprove={handleApprove}
-                onReject={handleReject}
-              />
+              <ErrorBoundary moduleName="TransparencyCenter" fallbackTitleAr="خطأ في مركز الشفافية">
+                <TransparencyCenter
+                  notifications={notifications}
+                  onApprove={handleApprove}
+                  onReject={handleReject}
+                />
+              </ErrorBoundary>
             </div>
 
             <div className="space-y-6">
