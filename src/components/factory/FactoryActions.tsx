@@ -84,9 +84,10 @@ const FactoryActions = ({
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
+                onClick={() => setVaultOpen(true)}
                 className="h-14 rounded-xl sf-glass-subtle border-foreground/20 text-foreground hover:sf-glass-strong"
               >
-                <Key className="h-5 w-5 me-2" />
+                <ShieldCheck className="h-5 w-5 me-2" />
                 {t("controls.apikeys")}
               </Button>
             </TooltipTrigger>
