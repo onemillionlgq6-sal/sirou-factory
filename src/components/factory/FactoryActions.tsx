@@ -153,6 +153,7 @@ const FactoryActions = ({
         onDisconnected={onBackendDisconnected}
         isConnected={isBackendConnected}
       />
+      <SecureVault open={vaultOpen} onOpenChange={setVaultOpen} />
     </>
   );
 };
