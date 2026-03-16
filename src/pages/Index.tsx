@@ -31,6 +31,10 @@ const Index = () => {
     () => !!getStoredCredentials()
   );
 
+  useEffect(() => {
+    initGlobalErrorHandlers();
+  }, []);
+
   const handleGenerate = useCallback((ideaText: string) => {
     setIdea(ideaText);
     setAppName(ideaText.split(" ").slice(0, 4).join(" "));
