@@ -4,7 +4,7 @@ import {
   Upload,
   Download,
   Settings,
-  Key,
+  ShieldCheck,
   Puzzle,
   Database,
 } from "lucide-react";
@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import BackendModal from "@/components/factory/BackendModal";
+import SecureVault from "@/components/factory/SecureVault";
 import { useI18n } from "@/lib/i18n";
 
 interface FactoryActionsProps {
