@@ -215,15 +215,22 @@ const Index = () => {
             </div>
 
             <div className="space-y-6">
-              <AppPreview isGenerated={phase === "complete"} appName={appName} />
-              <FactoryActions
-                isGenerated={phase === "complete"}
-                onPublish={handlePublish}
-                onExport={handleExport}
-                isBackendConnected={isBackendConnected}
-                onBackendConnected={handleBackendConnected}
-                onBackendDisconnected={handleBackendDisconnected}
-              />
+              <ErrorBoundary moduleName="AppPreview" fallbackTitleAr="خطأ في المعاينة">
+                <AppPreview isGenerated={phase === "complete"} appName={appName} />
+              </ErrorBoundary>
+              <ErrorBoundary moduleName="FactoryActions" fallbackTitleAr="خطأ في أدوات التحكم">
+                <FactoryActions
+                  isGenerated={phase === "complete"}
+                  onPublish={handlePublish}
+                  onExport={handleExport}
+                  isBackendConnected={isBackendConnected}
+                  onBackendConnected={handleBackendConnected}
+                  onBackendDisconnected={handleBackendDisconnected}
+                />
+              </ErrorBoundary>
+              <ErrorBoundary moduleName="HealthDashboard" fallbackTitleAr="خطأ في لوحة الصحة">
+                <HealthDashboard />
+              </ErrorBoundary>
             </div>
           </div>
         </div>
