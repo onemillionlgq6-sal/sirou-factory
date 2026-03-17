@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Upload,
@@ -16,7 +16,11 @@ import {
 } from "@/components/ui/tooltip";
 import BackendModal from "@/components/factory/BackendModal";
 import SecureVault from "@/components/factory/SecureVault";
+import SettingsModal from "@/components/factory/SettingsModal";
+import PluginsModal from "@/components/factory/PluginsModal";
 import { useI18n } from "@/lib/i18n";
+import { exportFactoryState, initKeyboardShortcuts } from "@/lib/factory-actions";
+import { toast } from "sonner";
 
 interface FactoryActionsProps {
   isGenerated: boolean;
@@ -37,7 +41,24 @@ const FactoryActions = ({
 }: FactoryActionsProps) => {
   const [backendOpen, setBackendOpen] = useState(false);
   const [vaultOpen, setVaultOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [pluginsOpen, setPluginsOpen] = useState(false);
   const { t } = useI18n();
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    return initKeyboardShortcuts({
+      onSave: () => toast.success(t("toast.published")),
+      onVault: () => setVaultOpen(true),
+      onExport: () => exportFactoryState(),
+      onSettings: () => setSettingsOpen(true),
+    });
+  }, [t]);
+
+  const handleExport = () => {
+    exportFactoryState();
+    onExport();
+  };
 
   return (
     <>
@@ -69,7 +90,7 @@ const FactoryActions = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                onClick={onExport}
+                onClick={handleExport}
                 variant="outline"
                 className="h-14 rounded-xl sf-glass-subtle border-foreground/20 text-foreground hover:sf-glass-strong font-semibold"
               >
@@ -91,13 +112,14 @@ const FactoryActions = ({
                 {t("controls.apikeys")}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{t("controls.apikeys.tooltip")}</TooltipContent>
+            <TooltipContent>{t("controls.apikeys.tooltip")} (Ctrl+K)</TooltipContent>
           </Tooltip>
 
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
+                onClick={() => setPluginsOpen(true)}
                 className="h-14 rounded-xl sf-glass-subtle border-foreground/20 text-foreground hover:sf-glass-strong"
               >
                 <Puzzle className="h-5 w-5 me-2" />
@@ -135,13 +157,14 @@ const FactoryActions = ({
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
+                onClick={() => setSettingsOpen(true)}
                 className="h-14 rounded-xl sf-glass-subtle border-foreground/20 text-foreground hover:sf-glass-strong"
               >
                 <Settings className="h-5 w-5 me-2" />
                 {t("controls.settings")}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{t("controls.settings.tooltip")}</TooltipContent>
+            <TooltipContent>{t("controls.settings.tooltip")} (Ctrl+,)</TooltipContent>
           </Tooltip>
         </div>
       </motion.div>
@@ -154,6 +177,8 @@ const FactoryActions = ({
         isConnected={isBackendConnected}
       />
       <SecureVault open={vaultOpen} onOpenChange={setVaultOpen} />
+      <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <PluginsModal open={pluginsOpen} onOpenChange={setPluginsOpen} />
     </>
   );
 };
