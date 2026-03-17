@@ -164,6 +164,32 @@ const translations = {
     "vault.value.placeholder": "Secret value...",
     "vault.add": "Add to Vault",
     "vault.empty": "Vault is empty. Add your first secret above.",
+    "vault.key.required": "Please enter a master key.",
+    "vault.key.wrong": "Wrong master key. Try again.",
+    "vault.unlocked": "Vault unlocked ✓",
+    "vault.enter.master": "Enter your master key to unlock the encrypted vault.",
+    "vault.master.placeholder": "Master Key...",
+    "vault.master.existing": "Enter your existing master key to decrypt the vault.",
+    "vault.master.new": "Choose a strong master key. You'll need it every time you open the vault.",
+    "vault.unlock": "Unlock Vault",
+    "vault.create": "Create Vault",
+
+    // Settings
+    "settings.title": "Factory Settings",
+    "settings.desc": "Configure theme, AI provider, and language preferences.",
+    "settings.saved": "Settings saved ✓",
+    "settings.theme": "Theme",
+    "settings.theme.dark": "Dark",
+    "settings.theme.light": "Light",
+    "settings.ai": "AI Provider",
+    "settings.ai.builtin": "Built-in",
+    "settings.language": "Language",
+
+    // Plugins
+    "plugins.title": "Plugin Registry",
+    "plugins.desc": "Approved whitelist plugins. Toggle to enable/disable.",
+    "plugins.enabled": "Plugin enabled ✓",
+    "plugins.disabled": "Plugin disabled",
   },
   ar: {
     "app.title": "مصنع سيرو",
