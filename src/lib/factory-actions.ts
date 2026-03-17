@@ -11,10 +11,10 @@ export const exportFactoryState = () => {
   try {
     const state: Record<string, unknown> = {};
 
-    // Gather all sirou_ prefixed localStorage items
+    // Gather ALL localStorage items for a full backup
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key?.startsWith("sirou_")) {
+      if (key) {
         try {
           state[key] = JSON.parse(localStorage.getItem(key)!);
         } catch {
@@ -25,18 +25,20 @@ export const exportFactoryState = () => {
 
     state._exportedAt = new Date().toISOString();
     state._version = "sirou-factory-v3";
+    state._totalKeys = Object.keys(state).length;
 
-    const blob = new Blob([JSON.stringify(state, null, 2)], {
-      type: "application/json",
-    });
+    const json = JSON.stringify(state, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `sirou-export-${Date.now()}.json`;
+    a.download = `sirou-factory-backup.json`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    toast.success("System exported successfully ✓");
+    toast.success(`System exported ✓ (${Object.keys(state).length} keys)`);
   } catch (err) {
     toast.error("Export failed: " + (err instanceof Error ? err.message : "Unknown error"));
   }
