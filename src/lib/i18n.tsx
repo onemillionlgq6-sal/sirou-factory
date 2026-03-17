@@ -412,7 +412,9 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
 
   const t = useCallback(
     (key: TranslationKey): string => {
-      return translations[lang][key] || translations.en[key] || key;
+      const dict = translations[lang] as Record<string, string>;
+      const fallback = translations.en as Record<string, string>;
+      return dict[key] || fallback[key] || key;
     },
     [lang]
   );
