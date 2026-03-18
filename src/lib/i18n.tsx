@@ -190,6 +190,25 @@ const translations = {
     "plugins.desc": "Approved whitelist plugins. Toggle to enable/disable.",
     "plugins.enabled": "Plugin enabled ✓",
     "plugins.disabled": "Plugin disabled",
+
+    // Import
+    "import.title": "Import System State",
+    "import.desc": "Restore factory from a backup file. Works 100% offline.",
+    "import.select.file": "Please select a backup file.",
+    "import.drop": "Click to select sirou-factory-backup.json",
+    "import.vault.detected": "Encrypted vault detected — Master Key required",
+    "import.restore": "Verify & Restore",
+    "controls.import": "Import State",
+    "controls.import.tooltip": "Restore factory from a backup file",
+
+    // Biometric
+    "biometric.title": "Biometric Lock",
+    "biometric.enroll": "Enroll Fingerprint",
+    "biometric.enrolled": "Biometric enrolled ✓",
+    "biometric.verify": "Verify Identity",
+    "biometric.verified": "Identity verified ✓",
+    "biometric.failed": "Biometric verification failed",
+    "biometric.unavailable": "Biometric auth not available on this device",
   },
   ar: {
     "app.title": "مصنع سيرو",
