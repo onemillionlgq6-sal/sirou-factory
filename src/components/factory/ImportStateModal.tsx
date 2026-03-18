@@ -124,10 +124,10 @@ const ImportStateModal = ({ open, onOpenChange }: ImportStateModalProps) => {
           {/* Master key input (if vault data detected) */}
           {needsKey && (
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-amber-400">
+            <div className="flex items-center gap-2 text-sm text-warning">
               <ShieldCheck className="h-4 w-4" />
-                {t("import.vault.detected" as any)}
-              </div>
+                {t("import.vault.detected")}
+            </div>
               <Input
                 type="password"
                 value={masterKey}

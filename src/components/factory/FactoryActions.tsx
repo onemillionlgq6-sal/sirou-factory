@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Puzzle,
   Database,
+  FileInput,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import BackendModal from "@/components/factory/BackendModal";
 import SecureVault from "@/components/factory/SecureVault";
 import SettingsModal from "@/components/factory/SettingsModal";
 import PluginsModal from "@/components/factory/PluginsModal";
+import ImportStateModal from "@/components/factory/ImportStateModal";
 import { useI18n } from "@/lib/i18n";
 import { exportFactoryState, initKeyboardShortcuts } from "@/lib/factory-actions";
 import { toast } from "sonner";
@@ -43,6 +45,7 @@ const FactoryActions = ({
   const [vaultOpen, setVaultOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [pluginsOpen, setPluginsOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const { t } = useI18n();
 
   // Keyboard shortcuts
@@ -98,7 +101,21 @@ const FactoryActions = ({
                 {t("controls.export")}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{t("controls.export.tooltip")}</TooltipContent>
+            <TooltipContent>{t("controls.export.tooltip")} (Ctrl+E)</TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                onClick={() => setImportOpen(true)}
+                className="h-14 rounded-xl sf-glass-subtle border-foreground/20 text-foreground hover:sf-glass-strong"
+              >
+                <FileInput className="h-5 w-5 me-2" />
+                {t("controls.import")}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("controls.import.tooltip")}</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -179,6 +196,7 @@ const FactoryActions = ({
       <SecureVault open={vaultOpen} onOpenChange={setVaultOpen} />
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
       <PluginsModal open={pluginsOpen} onOpenChange={setPluginsOpen} />
+      <ImportStateModal open={importOpen} onOpenChange={setImportOpen} />
     </>
   );
 };
