@@ -125,8 +125,8 @@ const ImportStateModal = ({ open, onOpenChange }: ImportStateModalProps) => {
           {needsKey && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-amber-400">
-                <ShieldCheck className="h-4 w-4" />
-                {t("import.vault.detected")}
+              <ShieldCheck className="h-4 w-4" />
+                {t("import.vault.detected" as any)}
               </div>
               <Input
                 type="password"

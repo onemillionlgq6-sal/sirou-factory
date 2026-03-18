@@ -387,6 +387,23 @@ const translations = {
     "plugins.desc": "إضافات القائمة البيضاء المعتمدة. بدّل للتفعيل/التعطيل.",
     "plugins.enabled": "تم تفعيل الإضافة ✓",
     "plugins.disabled": "تم تعطيل الإضافة",
+
+    "import.title": "استيراد حالة النظام",
+    "import.desc": "استعادة المصنع من ملف نسخ احتياطي. يعمل بدون إنترنت.",
+    "import.select.file": "يرجى اختيار ملف النسخ الاحتياطي.",
+    "import.drop": "انقر لاختيار ملف sirou-factory-backup.json",
+    "import.vault.detected": "تم اكتشاف خزنة مشفرة — المفتاح الرئيسي مطلوب",
+    "import.restore": "تحقق واستعادة",
+    "controls.import": "استيراد الحالة",
+    "controls.import.tooltip": "استعادة المصنع من ملف نسخ احتياطي",
+
+    "biometric.title": "القفل البيومتري",
+    "biometric.enroll": "تسجيل البصمة",
+    "biometric.enrolled": "تم تسجيل البيومتري ✓",
+    "biometric.verify": "التحقق من الهوية",
+    "biometric.verified": "تم التحقق من الهوية ✓",
+    "biometric.failed": "فشل التحقق البيومتري",
+    "biometric.unavailable": "المصادقة البيومترية غير متاحة على هذا الجهاز",
   },
 } as const;
 
