@@ -190,6 +190,25 @@ const translations = {
     "plugins.desc": "Approved whitelist plugins. Toggle to enable/disable.",
     "plugins.enabled": "Plugin enabled ✓",
     "plugins.disabled": "Plugin disabled",
+
+    // Import
+    "import.title": "Import System State",
+    "import.desc": "Restore factory from a backup file. Works 100% offline.",
+    "import.select.file": "Please select a backup file.",
+    "import.drop": "Click to select sirou-factory-backup.json",
+    "import.vault.detected": "Encrypted vault detected — Master Key required",
+    "import.restore": "Verify & Restore",
+    "controls.import": "Import State",
+    "controls.import.tooltip": "Restore factory from a backup file",
+
+    // Biometric
+    "biometric.title": "Biometric Lock",
+    "biometric.enroll": "Enroll Fingerprint",
+    "biometric.enrolled": "Biometric enrolled ✓",
+    "biometric.verify": "Verify Identity",
+    "biometric.verified": "Identity verified ✓",
+    "biometric.failed": "Biometric verification failed",
+    "biometric.unavailable": "Biometric auth not available on this device",
   },
   ar: {
     "app.title": "مصنع سيرو",
@@ -368,6 +387,23 @@ const translations = {
     "plugins.desc": "إضافات القائمة البيضاء المعتمدة. بدّل للتفعيل/التعطيل.",
     "plugins.enabled": "تم تفعيل الإضافة ✓",
     "plugins.disabled": "تم تعطيل الإضافة",
+
+    "import.title": "استيراد حالة النظام",
+    "import.desc": "استعادة المصنع من ملف نسخ احتياطي. يعمل بدون إنترنت.",
+    "import.select.file": "يرجى اختيار ملف النسخ الاحتياطي.",
+    "import.drop": "انقر لاختيار ملف sirou-factory-backup.json",
+    "import.vault.detected": "تم اكتشاف خزنة مشفرة — المفتاح الرئيسي مطلوب",
+    "import.restore": "تحقق واستعادة",
+    "controls.import": "استيراد الحالة",
+    "controls.import.tooltip": "استعادة المصنع من ملف نسخ احتياطي",
+
+    "biometric.title": "القفل البيومتري",
+    "biometric.enroll": "تسجيل البصمة",
+    "biometric.enrolled": "تم تسجيل البيومتري ✓",
+    "biometric.verify": "التحقق من الهوية",
+    "biometric.verified": "تم التحقق من الهوية ✓",
+    "biometric.failed": "فشل التحقق البيومتري",
+    "biometric.unavailable": "المصادقة البيومترية غير متاحة على هذا الجهاز",
   },
 } as const;
 
