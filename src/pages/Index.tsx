@@ -232,6 +232,9 @@ const Index = () => {
               <ErrorBoundary moduleName="HealthDashboard" fallbackTitleAr="خطأ في لوحة الصحة">
                 <HealthDashboard />
               </ErrorBoundary>
+              <ErrorBoundary moduleName="BuildGuard" fallbackTitleAr="خطأ في حارس البناء">
+                <BuildGuardPanel />
+              </ErrorBoundary>
             </div>
           </div>
         </div>
