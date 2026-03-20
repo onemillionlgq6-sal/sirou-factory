@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
-import { Settings, Moon, Sun, Globe } from "lucide-react";
+import { Settings, Moon, Sun, Globe, Paintbrush } from "lucide-react";
+import { usePlatform } from "@/hooks/use-platform";
+import type { VisualStyle } from "@/lib/platform";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,6 +36,7 @@ interface SettingsModalProps {
 
 const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
   const { t, lang, setLang } = useI18n();
+  const { visualStyle, setVisualStyle: changeVisualStyle } = usePlatform();
   const [prefs, setPrefs] = useState<FactoryPrefs>(loadPrefs);
 
   const save = useCallback((updated: FactoryPrefs) => {
@@ -114,6 +117,31 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
                   }
                 >
                   {label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Visual Style */}
+          <div>
+            <p className="text-sm font-medium text-foreground mb-2">
+              <Paintbrush className="h-4 w-4 inline me-1" />
+              {t("style.title")}
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {(["flat", "material", "custom"] as VisualStyle[]).map((s) => (
+                <Button
+                  key={s}
+                  variant={visualStyle === s ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => changeVisualStyle(s)}
+                  className={
+                    visualStyle === s
+                      ? "sf-gradient-bg text-primary-foreground"
+                      : "sf-glass-subtle border-foreground/20 text-foreground"
+                  }
+                >
+                  {t(`style.${s}` as any)}
                 </Button>
               ))}
             </div>

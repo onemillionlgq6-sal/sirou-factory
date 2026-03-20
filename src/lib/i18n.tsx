@@ -209,6 +209,18 @@ const translations = {
     "biometric.verified": "Identity verified ✓",
     "biometric.failed": "Biometric verification failed",
     "biometric.unavailable": "Biometric auth not available on this device",
+
+    // Navigation (Adaptive Layout)
+    "nav.factory": "Factory",
+    "nav.security": "Security",
+    "nav.health": "Health",
+    "nav.settings": "Settings",
+
+    // Visual Style
+    "style.title": "Visual Style",
+    "style.flat": "Flat",
+    "style.material": "Material",
+    "style.custom": "Custom",
   },
   ar: {
     "app.title": "مصنع سيرو",
@@ -404,6 +416,18 @@ const translations = {
     "biometric.verified": "تم التحقق من الهوية ✓",
     "biometric.failed": "فشل التحقق البيومتري",
     "biometric.unavailable": "المصادقة البيومترية غير متاحة على هذا الجهاز",
+
+    // Navigation (Adaptive Layout)
+    "nav.factory": "المصنع",
+    "nav.security": "الأمان",
+    "nav.health": "الصحة",
+    "nav.settings": "الإعدادات",
+
+    // Visual Style
+    "style.title": "النمط البصري",
+    "style.flat": "مسطّح",
+    "style.material": "ماتيريال",
+    "style.custom": "مخصص",
   },
 } as const;
 
