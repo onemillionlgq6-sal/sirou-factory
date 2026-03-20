@@ -373,6 +373,7 @@ const translations = {
     "vault.cat.cert": "شهادة",
     "vault.cat.token": "رمز",
     "vault.label.placeholder": "التسمية (مثال: مفتاح OpenAI)",
+    "vault.cat.keystore": "مخزن المفاتيح",
     "vault.value.placeholder": "القيمة السرية...",
     "vault.add": "إضافة إلى الخزنة",
     "vault.empty": "الخزنة فارغة. أضف سرك الأول أعلاه.",
