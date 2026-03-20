@@ -209,6 +209,18 @@ const translations = {
     "biometric.verified": "Identity verified ✓",
     "biometric.failed": "Biometric verification failed",
     "biometric.unavailable": "Biometric auth not available on this device",
+
+    // Navigation (Adaptive Layout)
+    "nav.factory": "Factory",
+    "nav.security": "Security",
+    "nav.health": "Health",
+    "nav.settings": "Settings",
+
+    // Visual Style
+    "style.title": "Visual Style",
+    "style.flat": "Flat",
+    "style.material": "Material",
+    "style.custom": "Custom",
   },
   ar: {
     "app.title": "مصنع سيرو",
