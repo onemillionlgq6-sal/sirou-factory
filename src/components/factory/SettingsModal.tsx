@@ -35,6 +35,7 @@ interface SettingsModalProps {
 
 const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
   const { t, lang, setLang } = useI18n();
+  const { visualStyle, setVisualStyle: changeVisualStyle } = usePlatform();
   const [prefs, setPrefs] = useState<FactoryPrefs>(loadPrefs);
 
   const save = useCallback((updated: FactoryPrefs) => {
