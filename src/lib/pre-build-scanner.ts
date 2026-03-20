@@ -25,7 +25,7 @@ export interface ScanResult {
 
 interface AppBlueprint {
   features: Array<{ name: string; approved: boolean; category: string }>;
-  entities: Array<{ name: string; fields: Array<{ name: string; type: string }> }>;
+  entities: Array<{ name: string; fields: string[] }>;
   pages: Array<{ name: string; route: string }>;
 }
 

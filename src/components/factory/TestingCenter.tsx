@@ -12,11 +12,7 @@ import { runPreBuildScan, type ScanResult, type ScanIssue } from "@/lib/pre-buil
 import { toast } from "sonner";
 
 interface TestingCenterProps {
-  blueprint: {
-    features: Array<{ name: string; approved: boolean; category: string }>;
-    entities: Array<{ name: string; fields: Array<{ name: string; type: string }> }>;
-    pages: Array<{ name: string; route: string }>;
-  } | null;
+  blueprint: AppBlueprint | null;
   appName: string;
   isGenerated: boolean;
 }
