@@ -13,6 +13,13 @@ import {
   generateDependencyLock,
   sha256,
 } from "@/lib/deterministic-build";
+import {
+  BUILD_GRADLE_APP,
+  PROGUARD_RULES,
+  ANDROID_MANIFEST,
+  ANDROID_CONFIG,
+  generateAndroidBuildGuide,
+} from "@/lib/android-build";
 
 /**
  * Generate a portable production bundle as a downloadable JSON
