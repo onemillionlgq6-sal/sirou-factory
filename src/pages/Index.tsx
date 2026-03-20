@@ -13,6 +13,7 @@ import AppBuilderEngine from "@/components/factory/AppBuilderEngine";
 import HealthDashboard from "@/components/factory/HealthDashboard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import BuildGuardPanel from "@/components/factory/BuildGuardPanel";
+import CompliancePanel from "@/components/factory/CompliancePanel";
 import { toast } from "sonner";
 import { getStoredCredentials } from "@/lib/supabase";
 import { useI18n } from "@/lib/i18n";
