@@ -220,6 +220,13 @@ const Index = () => {
               <ErrorBoundary moduleName="AppPreview" fallbackTitleAr="خطأ في المعاينة">
                 <AppPreview isGenerated={phase === "complete"} appName={appName} />
               </ErrorBoundary>
+              <ErrorBoundary moduleName="TestingCenter" fallbackTitleAr="خطأ في مركز الاختبار">
+                <TestingCenter
+                  blueprint={blueprint}
+                  appName={appName}
+                  isGenerated={phase === "complete"}
+                />
+              </ErrorBoundary>
               <ErrorBoundary moduleName="FactoryActions" fallbackTitleAr="خطأ في أدوات التحكم">
                 <FactoryActions
                   isGenerated={phase === "complete"}
