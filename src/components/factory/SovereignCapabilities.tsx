@@ -123,8 +123,8 @@ const SovereignCapabilities = () => {
           <Shield className="h-5 w-5 text-primary-foreground" />
         </div>
         <div>
-      <h2 className="text-lg font-display font-bold tracking-wide text-foreground">{t("cap.title")}</h2>
-          <p className="text-xs text-muted-foreground font-sans">{t("cap.subtitle")}</p>
+      <h2 className="text-lg font-bold text-foreground">{t("cap.title")}</h2>
+          <p className="text-xs text-muted-foreground">{t("cap.subtitle")}</p>
         </div>
       </div>
 
