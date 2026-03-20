@@ -250,6 +250,13 @@ const Index = () => {
               </ErrorBoundary>
             </div>
           </div>
+
+          {/* Full-width Sovereign Capabilities Center */}
+          <div className="pb-12">
+            <ErrorBoundary moduleName="SovereignCapabilities" fallbackTitleAr="خطأ في مركز القدرات">
+              <SovereignCapabilities />
+            </ErrorBoundary>
+          </div>
         </div>
       </div>
     </div>
