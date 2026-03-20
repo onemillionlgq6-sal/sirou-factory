@@ -416,6 +416,18 @@ const translations = {
     "biometric.verified": "تم التحقق من الهوية ✓",
     "biometric.failed": "فشل التحقق البيومتري",
     "biometric.unavailable": "المصادقة البيومترية غير متاحة على هذا الجهاز",
+
+    // Navigation (Adaptive Layout)
+    "nav.factory": "المصنع",
+    "nav.security": "الأمان",
+    "nav.health": "الصحة",
+    "nav.settings": "الإعدادات",
+
+    // Visual Style
+    "style.title": "النمط البصري",
+    "style.flat": "مسطّح",
+    "style.material": "ماتيريال",
+    "style.custom": "مخصص",
   },
 } as const;
 
