@@ -70,7 +70,7 @@ function scanCodeQuality(blueprint: AppBlueprint | null): ScanIssue[] {
 
   // Check for entities without primary key field
   for (const entity of blueprint.entities) {
-    const hasId = entity.fields.some(f => f.name === "id" || f.name === "uuid");
+    const hasId = entity.fields.some(f => f === "id" || f === "uuid" || f.startsWith("id") || f.startsWith("uuid"));
     if (!hasId) {
       issues.push({
         id: `entity-noid-${entity.name}`,
