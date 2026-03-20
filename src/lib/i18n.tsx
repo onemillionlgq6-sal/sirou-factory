@@ -161,6 +161,7 @@ const translations = {
     "vault.cat.cert": "Certificate",
     "vault.cat.token": "Token",
     "vault.label.placeholder": "Label (e.g. OpenAI Key)",
+    "vault.cat.keystore": "Keystore",
     "vault.value.placeholder": "Secret value...",
     "vault.add": "Add to Vault",
     "vault.empty": "Vault is empty. Add your first secret above.",
