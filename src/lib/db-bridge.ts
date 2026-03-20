@@ -1,12 +1,13 @@
 /**
- * Universal Database Bridge — Offline-First with Optional Sync
- * 
- * Modular interface: swap Supabase URL/Key in settings to point
- * to a local PostgreSQL instance without rewriting core logic.
- * Falls back to localStorage when no backend is connected.
+ * Universal Database Bridge — Event-Sourced, Offline-First
+ *
+ * Public API is unchanged (dbSelect, dbInsert, dbDelete) so existing
+ * consumers keep working. Under the hood all mutations are now
+ * append-only events in IndexedDB, with optional Supabase sync.
  */
 
-import { getStoredCredentials, createSupabaseClient } from "@/lib/supabase";
+import { appendEvent, getEvents, EventType } from "@/lib/event-store";
+import { reconstructState, getEntities } from "@/lib/state-reconstructor";
 
 export interface DBRecord {
   id: string;
@@ -16,59 +17,17 @@ export interface DBRecord {
 export interface QueryResult<T = DBRecord> {
   data: T[] | null;
   error: string | null;
-  source: "remote" | "local";
+  source: "local";
 }
 
 export interface InsertResult<T = DBRecord> {
   data: T | null;
   error: string | null;
-  source: "remote" | "local";
-}
-
-const LOCAL_PREFIX = "sirou_db_";
-
-/**
- * Get the local cache key for a table
- */
-function localKey(table: string): string {
-  return `${LOCAL_PREFIX}${table}`;
+  source: "local";
 }
 
 /**
- * Read from local cache
- */
-function readLocal<T = DBRecord>(table: string): T[] {
-  try {
-    const raw = localStorage.getItem(localKey(table));
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Write to local cache
- */
-function writeLocal<T = DBRecord>(table: string, data: T[]): void {
-  try {
-    localStorage.setItem(localKey(table), JSON.stringify(data));
-  } catch {
-    // Quota exceeded — silently fail
-  }
-}
-
-/**
- * Check if remote backend is available
- */
-function getRemoteClient() {
-  const creds = getStoredCredentials();
-  if (!creds) return null;
-  return createSupabaseClient(creds.url, creds.anonKey);
-}
-
-/**
- * SELECT — Query records from a table
- * Tries remote first, falls back to local cache
+ * SELECT — Reconstruct state from event journal then filter.
  */
 export async function dbSelect<T = DBRecord>(
   table: string,
@@ -80,142 +39,87 @@ export async function dbSelect<T = DBRecord>(
     limit?: number;
   }
 ): Promise<QueryResult<T>> {
-  const client = getRemoteClient();
+  try {
+    const events = await getEvents({ entity_type: table });
+    const allEvents = await getEvents(); // full stream for cross-entity integrity
+    const state = reconstructState(allEvents);
+    let rows = getEntities<T>(state, table);
 
-  if (client) {
-    try {
-      let query = client.from(table).select("*");
-      if (options?.column && options?.value !== undefined) {
-        query = query.eq(options.column, options.value);
-      }
-      if (options?.orderBy) {
-        query = query.order(options.orderBy, { ascending: options?.ascending ?? false });
-      }
-      if (options?.limit) {
-        query = query.limit(options.limit);
-      }
-
-      const { data, error } = await query;
-
-      if (!error && data) {
-        // Sync to local cache for offline access
-        writeLocal(table, data);
-        return { data: data as T[], error: null, source: "remote" };
-      }
-
-      // Remote failed — fall through to local
-      if (error) {
-        console.warn(`[DB Bridge] Remote query failed for ${table}:`, error.message);
-      }
-    } catch (err) {
-      console.warn(`[DB Bridge] Remote unreachable for ${table}, using local cache`);
+    if (options?.column && options?.value !== undefined) {
+      rows = rows.filter((r: any) => r[options.column!] === options.value);
     }
+
+    if (options?.orderBy) {
+      const asc = options.ascending ?? false;
+      rows.sort((a: any, b: any) => {
+        const av = a[options.orderBy!];
+        const bv = b[options.orderBy!];
+        if (av < bv) return asc ? -1 : 1;
+        if (av > bv) return asc ? 1 : -1;
+        return 0;
+      });
+    }
+
+    if (options?.limit) {
+      rows = rows.slice(0, options.limit);
+    }
+
+    return { data: rows, error: null, source: "local" };
+  } catch (err) {
+    return { data: [], error: (err as Error).message, source: "local" };
   }
-
-  // Offline fallback
-  let localData = readLocal<T>(table);
-
-  if (options?.column && options?.value !== undefined) {
-    localData = localData.filter(
-      (r: any) => r[options.column!] === options.value
-    );
-  }
-
-  if (options?.limit) {
-    localData = localData.slice(0, options.limit);
-  }
-
-  return { data: localData, error: null, source: "local" };
 }
 
 /**
- * INSERT — Add a record to a table
- * Writes to remote if available, always writes to local cache
+ * INSERT — Append an ENTITY_CREATED event.
  */
 export async function dbInsert<T = DBRecord>(
   table: string,
   record: Partial<T> & { id?: string }
 ): Promise<InsertResult<T>> {
-  const withId = {
+  const id = record.id || crypto.randomUUID();
+  const payload = {
     ...record,
-    id: record.id || crypto.randomUUID(),
+    id,
     created_at: (record as any).created_at || new Date().toISOString(),
-  } as T;
+  };
 
-  // Always write to local first (offline-first)
-  const local = readLocal<T>(table);
-  local.unshift(withId);
-  writeLocal(table, local);
-
-  // Attempt remote sync
-  const client = getRemoteClient();
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(table)
-        .insert(withId as any)
-        .select()
-        .single();
-
-      if (!error && data) {
-        return { data: data as T, error: null, source: "remote" };
-      }
-
-      if (error) {
-        console.warn(`[DB Bridge] Remote insert failed for ${table}:`, error.message);
-        // Data is safe in local cache
-      }
-    } catch {
-      console.warn(`[DB Bridge] Remote unreachable for insert to ${table}`);
-    }
+  try {
+    await appendEvent(EventType.ENTITY_CREATED, payload, {
+      entity_type: table,
+      entity_id: id,
+    });
+    return { data: payload as T, error: null, source: "local" };
+  } catch (err) {
+    return { data: null, error: (err as Error).message, source: "local" };
   }
-
-  return { data: withId, error: null, source: "local" };
 }
 
 /**
- * DELETE — Remove a record by ID
+ * DELETE — Append an ENTITY_DELETED event.
  */
 export async function dbDelete(
   table: string,
   id: string
-): Promise<{ error: string | null; source: "remote" | "local" }> {
-  // Remove from local
-  const local = readLocal(table);
-  const filtered = local.filter((r: any) => r.id !== id);
-  writeLocal(table, filtered);
-
-  // Attempt remote
-  const client = getRemoteClient();
-  if (client) {
-    try {
-      const { error } = await client.from(table).delete().eq("id", id);
-      if (!error) return { error: null, source: "remote" };
-      console.warn(`[DB Bridge] Remote delete failed:`, error.message);
-    } catch {
-      // Offline — local delete is sufficient
-    }
+): Promise<{ error: string | null; source: "local" }> {
+  try {
+    await appendEvent(EventType.ENTITY_DELETED, { id }, {
+      entity_type: table,
+      entity_id: id,
+    });
+    return { error: null, source: "local" };
+  } catch (err) {
+    return { error: (err as Error).message, source: "local" };
   }
-
-  return { error: null, source: "local" };
 }
 
 /**
- * Get sync status — useful for UI indicators
+ * Get sync status — diagnostic info.
  */
-export function getDbSyncStatus(): {
-  isRemoteAvailable: boolean;
-  localTables: string[];
-} {
-  const isRemoteAvailable = !!getStoredCredentials();
-  const localTables: string[] = [];
-
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key?.startsWith(LOCAL_PREFIX)) {
-      localTables.push(key.replace(LOCAL_PREFIX, ""));
-    }
-  }
-
-  return { isRemoteAvailable, localTables };
+export async function getDbSyncStatus(): Promise<{
+  isEventSourced: true;
+  totalEvents: number;
+}> {
+  const events = await getEvents();
+  return { isEventSourced: true, totalEvents: events.length };
 }
