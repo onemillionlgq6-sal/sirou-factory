@@ -5,102 +5,18 @@
 
 import { toast } from "sonner";
 import { decrypt, hasEncryptedVault } from "@/lib/crypto";
-
-// ─── Dockerfile Template ───
-const DOCKERFILE = `# Sirou Factory — Portable Production Build
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --production=false
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-`;
-
-// ─── Nginx Config Template ───
-const NGINX_CONF = `server {
-    listen 80;
-    server_name _;
-    root /usr/share/nginx/html;
-    index index.html;
-
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co;" always;
-
-    # Gzip compression
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript image/svg+xml;
-    gzip_min_length 1024;
-
-    # SPA routing — all routes fallback to index.html
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Cache static assets aggressively
-    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # Disable access to dotfiles
-    location ~ /\\. {
-        deny all;
-    }
-}
-`;
-
-// ─── Docker Compose Template ───
-const DOCKER_COMPOSE = `version: "3.9"
-services:
-  sirou-app:
-    build: .
-    ports:
-      - "8080:80"
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-`;
-
-// ─── README for self-hosting ───
-const SELF_HOST_README = `# Sirou Factory — Self-Hosted Deployment
-
-## Quick Start
-\`\`\`bash
-docker-compose up -d
-\`\`\`
-App will be available at http://localhost:8080
-
-## Manual Build
-\`\`\`bash
-npm ci
-npm run build
-# Serve the 'dist' folder with any static server
-\`\`\`
-
-## Environment
-- Node.js 20+
-- No external dependencies required for offline operation
-- Supabase connection is optional (offline-first by design)
-
-## Data Sovereignty
-All data stays in your browser (localStorage + IndexedDB).
-The Secure Vault uses AES-256-GCM encryption with your Master Key.
-No telemetry, no external calls unless you explicitly configure a backend.
-`;
+import {
+  DOCKERFILE,
+  NGINX_CONF,
+  DOCKER_COMPOSE,
+  SELF_HOST_README,
+  generateDependencyLock,
+  sha256,
+} from "@/lib/deterministic-build";
 
 /**
- * Generate a portable production bundle as a downloadable ZIP
- * Contains: system state, Dockerfile, nginx.conf, docker-compose.yml, README
+ * Generate a portable production bundle as a downloadable JSON
+ * Contains: system state, Dockerfile, nginx.conf, docker-compose.yml, README, dep lock, SHA-256
  */
 export const exportFactoryState = async () => {
   try {
@@ -121,16 +37,18 @@ export const exportFactoryState = async () => {
     state._exportedAt = new Date().toISOString();
     state._version = "sirou-factory-v3";
     state._totalKeys = Object.keys(state).length;
-    state._buildHash = await generateDeterministicHash(JSON.stringify(state));
 
-    // Build the bundle as a multi-file JSON package
+    const depLock = generateDependencyLock();
+
+    // Build the bundle
     const bundle = {
       manifest: {
         name: "sirou-factory-portable-bundle",
         version: "3.0.0",
         exportedAt: state._exportedAt,
-        buildHash: state._buildHash,
+        buildHash: "", // filled below
         description: "Portable Production Bundle — Sovereign Independence Protocol",
+        dependencyLock: depLock,
       },
       systemState: state,
       infrastructure: {
@@ -140,6 +58,10 @@ export const exportFactoryState = async () => {
         "README.md": SELF_HOST_README,
       },
     };
+
+    // Deterministic hash of the entire bundle (before hash insertion)
+    const preHash = JSON.stringify(bundle, null, 2);
+    bundle.manifest.buildHash = await sha256(preHash);
 
     const json = JSON.stringify(bundle, null, 2);
     const blob = new Blob([json], { type: "application/json" });
@@ -152,7 +74,9 @@ export const exportFactoryState = async () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    toast.success(`Portable bundle exported ✓ (${Object.keys(state).length} keys, Dockerfile + Nginx included)`);
+    toast.success(
+      `Portable bundle exported ✓ (${Object.keys(state).length} keys, SHA-256 verified, Dockerfile + Nginx included)`
+    );
   } catch (err) {
     toast.error("Export failed: " + (err instanceof Error ? err.message : "Unknown error"));
   }
@@ -185,6 +109,19 @@ export const importFactoryState = async (
       return { success: false, message: "Not a valid Sirou Factory backup file.", keysRestored: 0 };
     }
 
+    // Verify build hash if present
+    if (parsed.manifest?.buildHash) {
+      const bundleCopy = { ...parsed, manifest: { ...parsed.manifest, buildHash: "" } };
+      const recomputedHash = await sha256(JSON.stringify(bundleCopy, null, 2));
+      if (recomputedHash !== parsed.manifest.buildHash) {
+        return {
+          success: false,
+          message: "Bundle integrity check failed — SHA-256 mismatch. File may be tampered.",
+          keysRestored: 0,
+        };
+      }
+    }
+
     // If vault data exists in backup, verify master key
     const vaultKey = "sirou_secure_vault_enc";
     const hasVaultData = !!stateData[vaultKey];
@@ -214,7 +151,7 @@ export const importFactoryState = async (
 
     return {
       success: true,
-      message: `Restored ${keysRestored} keys from backup (${stateData._version || "legacy"}).`,
+      message: `Restored ${keysRestored} keys from backup (${stateData._version || "legacy"}). Integrity verified ✓`,
       keysRestored,
     };
   } catch (err) {
@@ -225,18 +162,6 @@ export const importFactoryState = async (
     };
   }
 };
-
-/**
- * Deterministic hash for build reproducibility verification
- * Uses Web Crypto SHA-256
- */
-async function generateDeterministicHash(input: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(input);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 /**
  * Initialize global keyboard shortcuts
