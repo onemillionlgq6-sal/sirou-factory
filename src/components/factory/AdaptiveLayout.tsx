@@ -27,10 +27,10 @@ interface AdaptiveLayoutProps {
 }
 
 const tabs = [
-  { id: "factory", icon: LayoutDashboard, labelKey: "nav.factory" },
-  { id: "security", icon: Shield, labelKey: "nav.security" },
-  { id: "health", icon: Activity, labelKey: "nav.health" },
-  { id: "settings", icon: Settings, labelKey: "nav.settings" },
+  { id: "factory", icon: LayoutDashboard, labelKey: "nav.factory" as const },
+  { id: "security", icon: Shield, labelKey: "nav.security" as const },
+  { id: "health", icon: Activity, labelKey: "nav.health" as const },
+  { id: "settings", icon: Settings, labelKey: "nav.settings" as const },
 ];
 
 const AdaptiveLayout = ({
