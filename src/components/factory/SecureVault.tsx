@@ -17,7 +17,7 @@ interface VaultEntry {
   id: string;
   label: string;
   value: string;
-  category: "api" | "certificate" | "token";
+  category: "api" | "certificate" | "token" | "keystore";
   addedAt: string;
 }
 
@@ -120,10 +120,11 @@ const SecureVault = ({ open, onOpenChange }: SecureVaultProps) => {
     });
   };
 
-  const categoryLabels = {
+  const categoryLabels: Record<VaultEntry["category"], string> = {
     api: t("vault.cat.api"),
     certificate: t("vault.cat.cert"),
     token: t("vault.cat.token"),
+    keystore: t("vault.cat.keystore" as any) || "Keystore",
   };
 
   return (
@@ -169,7 +170,7 @@ const SecureVault = ({ open, onOpenChange }: SecureVaultProps) => {
             {/* Add new entry */}
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-2">
-                {(["api", "certificate", "token"] as const).map((cat) => (
+                {(["api", "certificate", "token", "keystore"] as const).map((cat) => (
                   <Button
                     key={cat}
                     variant={category === cat ? "default" : "outline"}
