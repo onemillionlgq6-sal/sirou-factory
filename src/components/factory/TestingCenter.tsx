@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
+import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
 import { runPreBuildScan, type ScanResult, type ScanIssue } from "@/lib/pre-build-scanner";
 import { toast } from "sonner";
 
