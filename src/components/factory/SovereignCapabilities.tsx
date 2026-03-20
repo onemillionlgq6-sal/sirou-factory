@@ -77,9 +77,9 @@ const SovereignCapabilities = () => {
       capabilities: [
         { id: "sdk", nameKey: "cap.sdk.name", descKey: "cap.sdk.desc", icon: Cpu, status: "active" },
         { id: "apk", nameKey: "cap.apk.name", descKey: "cap.apk.desc", icon: Package, status: "active" },
-        { id: "camera", nameKey: "cap.camera.name", descKey: "cap.camera.desc", icon: Camera, status: "active", testAction: () => runTest("Camera Bridge") },
-        { id: "gps", nameKey: "cap.gps.name", descKey: "cap.gps.desc", icon: MapPin, status: "active", testAction: () => runTest("GPS Location") },
-        { id: "haptics", nameKey: "cap.haptics.name", descKey: "cap.haptics.desc", icon: Vibrate, status: "active", testAction: () => runTest("Haptics") },
+        { id: "camera", nameKey: "cap.camera.name", descKey: "cap.camera.desc", icon: Camera, status: "active", testAction: () => runTest("camera", "Camera Bridge") },
+        { id: "gps", nameKey: "cap.gps.name", descKey: "cap.gps.desc", icon: MapPin, status: "active", testAction: () => runTest("gps", "GPS Location") },
+        { id: "haptics", nameKey: "cap.haptics.name", descKey: "cap.haptics.desc", icon: Vibrate, status: "active", testAction: () => runTest("haptics", "Haptics") },
       ],
     },
     {
