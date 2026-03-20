@@ -25,12 +25,11 @@ const SovereignCoreLauncher = () => {
         return;
       }
 
-      // Verify key by attempting to decrypt vault header
+      // Verify key by attempting to decrypt vault data
       try {
-        const { deriveKey, decryptData } = await import("@/lib/crypto");
-        const vault = JSON.parse(localStorage.getItem("sirou_vault_encrypted")!);
-        const derivedKey = await deriveKey(key, vault.salt);
-        await decryptData(derivedKey, vault.data);
+        const { decrypt } = await import("@/lib/crypto");
+        const vaultData = localStorage.getItem("sirou_vault_encrypted")!;
+        await decrypt(vaultData, key);
         toast.success(t("sovereign.access.granted" as any) || "Access granted ✓");
       } catch {
         toast.error(t("sovereign.key.invalid" as any) || "Invalid Master Key");
