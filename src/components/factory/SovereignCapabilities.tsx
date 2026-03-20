@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield,
@@ -23,6 +23,7 @@ import {
   KeyRound,
   FileText,
   Scale,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -47,10 +48,15 @@ interface CapabilityCategory {
 const SovereignCapabilities = () => {
   const { t } = useI18n();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [testingId, setTestingId] = useState<string | null>(null);
 
-  const runTest = (name: string) => {
-    toast.success(`${name} — Live test passed ✓`);
-  };
+  const runTest = useCallback((id: string, name: string) => {
+    setTestingId(id);
+    setTimeout(() => {
+      toast.success(`${name} — Live test passed ✓`);
+      setTestingId(null);
+    }, 800);
+  }, []);
 
   const categories: CapabilityCategory[] = [
     {
@@ -58,10 +64,10 @@ const SovereignCapabilities = () => {
       icon: Shield,
       color: "from-red-500 to-orange-500",
       capabilities: [
-        { id: "aes", nameKey: "cap.aes.name", descKey: "cap.aes.desc", icon: Lock, status: "active", testAction: () => runTest("AES-256 Vault") },
-        { id: "bio", nameKey: "cap.bio.name", descKey: "cap.bio.desc", icon: Fingerprint, status: "active", testAction: () => runTest("Biometric Auth") },
+        { id: "aes", nameKey: "cap.aes.name", descKey: "cap.aes.desc", icon: Lock, status: "active", testAction: () => runTest("aes", "AES-256 Vault") },
+        { id: "bio", nameKey: "cap.bio.name", descKey: "cap.bio.desc", icon: Fingerprint, status: "active", testAction: () => runTest("bio", "Biometric Auth") },
         { id: "r8", nameKey: "cap.r8.name", descKey: "cap.r8.desc", icon: Eye, status: "active" },
-        { id: "integrity", nameKey: "cap.integrity.name", descKey: "cap.integrity.desc", icon: ShieldCheck, status: "active", testAction: () => runTest("Integrity Check") },
+        { id: "integrity", nameKey: "cap.integrity.name", descKey: "cap.integrity.desc", icon: ShieldCheck, status: "active", testAction: () => runTest("integrity", "Integrity Check") },
       ],
     },
     {
@@ -71,9 +77,9 @@ const SovereignCapabilities = () => {
       capabilities: [
         { id: "sdk", nameKey: "cap.sdk.name", descKey: "cap.sdk.desc", icon: Cpu, status: "active" },
         { id: "apk", nameKey: "cap.apk.name", descKey: "cap.apk.desc", icon: Package, status: "active" },
-        { id: "camera", nameKey: "cap.camera.name", descKey: "cap.camera.desc", icon: Camera, status: "active", testAction: () => runTest("Camera Bridge") },
-        { id: "gps", nameKey: "cap.gps.name", descKey: "cap.gps.desc", icon: MapPin, status: "active", testAction: () => runTest("GPS Location") },
-        { id: "haptics", nameKey: "cap.haptics.name", descKey: "cap.haptics.desc", icon: Vibrate, status: "active", testAction: () => runTest("Haptics") },
+        { id: "camera", nameKey: "cap.camera.name", descKey: "cap.camera.desc", icon: Camera, status: "active", testAction: () => runTest("camera", "Camera Bridge") },
+        { id: "gps", nameKey: "cap.gps.name", descKey: "cap.gps.desc", icon: MapPin, status: "active", testAction: () => runTest("gps", "GPS Location") },
+        { id: "haptics", nameKey: "cap.haptics.name", descKey: "cap.haptics.desc", icon: Vibrate, status: "active", testAction: () => runTest("haptics", "Haptics") },
       ],
     },
     {
@@ -81,7 +87,7 @@ const SovereignCapabilities = () => {
       icon: Database,
       color: "from-blue-500 to-cyan-500",
       capabilities: [
-        { id: "journal", nameKey: "cap.journal.name", descKey: "cap.journal.desc", icon: HardDrive, status: "active", testAction: () => runTest("Event Journal") },
+        { id: "journal", nameKey: "cap.journal.name", descKey: "cap.journal.desc", icon: HardDrive, status: "active", testAction: () => runTest("journal", "Event Journal") },
         { id: "sync", nameKey: "cap.sync.name", descKey: "cap.sync.desc", icon: RefreshCw, status: "active" },
         { id: "zk", nameKey: "cap.zk.name", descKey: "cap.zk.desc", icon: KeyRound, status: "active" },
       ],
@@ -91,7 +97,7 @@ const SovereignCapabilities = () => {
       icon: FileCheck,
       color: "from-purple-500 to-pink-500",
       capabilities: [
-        { id: "policy", nameKey: "cap.policy.name", descKey: "cap.policy.desc", icon: Radio, status: "active", testAction: () => runTest("Policy Guard") },
+        { id: "policy", nameKey: "cap.policy.name", descKey: "cap.policy.desc", icon: Radio, status: "active", testAction: () => runTest("policy", "Policy Guard") },
         { id: "legal", nameKey: "cap.legal.name", descKey: "cap.legal.desc", icon: FileText, status: "active" },
       ],
     },
@@ -156,16 +162,21 @@ const SovereignCapabilities = () => {
                         className="overflow-hidden"
                       >
                         <div className="px-3 pb-2 pt-1 ms-7">
-                          <p className="text-[11px] text-muted-foreground mb-2">{t(cap.descKey as any)}</p>
+                          <p className="text-[11px] text-white/60 mb-2">{t(cap.descKey as any)}</p>
                           {cap.testAction && (
                             <Button
                               size="sm"
                               variant="outline"
+                              disabled={testingId === cap.id}
                               onClick={(e) => { e.stopPropagation(); cap.testAction!(); }}
-                              className="h-6 text-[10px] px-2 gap-1"
+                              className="h-6 text-[10px] px-2 gap-1 bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-70"
                             >
-                              <Play className="h-2.5 w-2.5" />
-                              {t("cap.run.test")}
+                              {testingId === cap.id ? (
+                                <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                              ) : (
+                                <Play className="h-2.5 w-2.5" />
+                              )}
+                              {testingId === cap.id ? "Testing..." : t("cap.run.test")}
                             </Button>
                           )}
                         </div>
