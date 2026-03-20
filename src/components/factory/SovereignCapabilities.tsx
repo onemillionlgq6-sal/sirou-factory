@@ -97,7 +97,7 @@ const SovereignCapabilities = () => {
       icon: FileCheck,
       color: "from-purple-500 to-pink-500",
       capabilities: [
-        { id: "policy", nameKey: "cap.policy.name", descKey: "cap.policy.desc", icon: Radio, status: "active", testAction: () => runTest("Policy Guard") },
+        { id: "policy", nameKey: "cap.policy.name", descKey: "cap.policy.desc", icon: Radio, status: "active", testAction: () => runTest("policy", "Policy Guard") },
         { id: "legal", nameKey: "cap.legal.name", descKey: "cap.legal.desc", icon: FileText, status: "active" },
       ],
     },
