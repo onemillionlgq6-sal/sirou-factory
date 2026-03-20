@@ -87,7 +87,7 @@ const SovereignCapabilities = () => {
       icon: Database,
       color: "from-blue-500 to-cyan-500",
       capabilities: [
-        { id: "journal", nameKey: "cap.journal.name", descKey: "cap.journal.desc", icon: HardDrive, status: "active", testAction: () => runTest("Event Journal") },
+        { id: "journal", nameKey: "cap.journal.name", descKey: "cap.journal.desc", icon: HardDrive, status: "active", testAction: () => runTest("journal", "Event Journal") },
         { id: "sync", nameKey: "cap.sync.name", descKey: "cap.sync.desc", icon: RefreshCw, status: "active" },
         { id: "zk", nameKey: "cap.zk.name", descKey: "cap.zk.desc", icon: KeyRound, status: "active" },
       ],
