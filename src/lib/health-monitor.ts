@@ -1,10 +1,10 @@
 /**
  * Built-in Health Monitoring System
- * Logs errors, performance metrics, and system health to in-memory store
- * and optionally to Supabase learning_log table when connected.
+ * Logs errors and performance metrics to in-memory store
+ * and to the event journal (synced to Supabase when online).
  */
 
-import { getStoredCredentials, createSupabaseClient } from "@/lib/supabase";
+import { appendEvent, EventType } from "@/lib/event-store";
 
 export interface ErrorEntry {
   module: string;
@@ -30,34 +30,34 @@ export interface HealthStatus {
   platform: string;
 }
 
-// In-memory stores
+// In-memory stores (fast access for dashboard)
 const errorLog: ErrorEntry[] = [];
 const perfLog: PerformanceEntry[] = [];
 const MAX_LOG_SIZE = 200;
 const startTime = Date.now();
 
 /**
- * Log an error to the internal store and optionally to Supabase
+ * Log an error to in-memory store and event journal
  */
 export const logError = (entry: ErrorEntry) => {
   errorLog.unshift(entry);
   if (errorLog.length > MAX_LOG_SIZE) errorLog.pop();
 
-  // Async persist to Supabase if connected
-  persistToSupabase("error", entry).catch(() => {});
+  // Persist to event journal (async, fire-and-forget)
+  appendEvent(EventType.USER_ACTION_LOGGED, {
+    type: "health_error",
+    ...entry,
+  }, {
+    entity_type: "health_log",
+    entity_id: crypto.randomUUID(),
+  }).catch(() => {});
 };
 
-/**
- * Log a performance metric
- */
 export const logPerformance = (entry: PerformanceEntry) => {
   perfLog.unshift(entry);
   if (perfLog.length > MAX_LOG_SIZE) perfLog.pop();
 };
 
-/**
- * Get current health status
- */
 export const getHealthStatus = (): HealthStatus => {
   const criticalErrors = errorLog.filter((e) => e.severity === "critical");
   const recentCritical = criticalErrors.filter(
@@ -86,27 +86,14 @@ export const getHealthStatus = (): HealthStatus => {
   };
 };
 
-/**
- * Get error log
- */
 export const getErrorLog = (): ErrorEntry[] => [...errorLog];
-
-/**
- * Get performance log
- */
 export const getPerformanceLog = (): PerformanceEntry[] => [...perfLog];
 
-/**
- * Clear logs
- */
 export const clearLogs = () => {
   errorLog.length = 0;
   perfLog.length = 0;
 };
 
-/**
- * Measure a function's execution time
- */
 export const measurePerformance = async <T>(
   label: string,
   fn: () => T | Promise<T>
@@ -134,28 +121,6 @@ export const measurePerformance = async <T>(
   }
 };
 
-/**
- * Persist log entry to Supabase learning_log if connected
- */
-const persistToSupabase = async (type: string, data: any) => {
-  const creds = getStoredCredentials();
-  if (!creds) return;
-
-  try {
-    const client = createSupabaseClient(creds.url, creds.anonKey);
-    await client.from("learning_log").insert({
-      action_type: `health_${type}`,
-      details: JSON.stringify(data),
-      created_at: new Date().toISOString(),
-    });
-  } catch {
-    // Silent fail — don't create error loops
-  }
-};
-
-/**
- * Setup global unhandled error/rejection listeners
- */
 export const initGlobalErrorHandlers = () => {
   window.addEventListener("error", (event) => {
     logError({
@@ -177,7 +142,6 @@ export const initGlobalErrorHandlers = () => {
     });
   });
 
-  // Performance observer for long tasks
   if ('PerformanceObserver' in window) {
     try {
       const observer = new PerformanceObserver((list) => {
@@ -193,8 +157,6 @@ export const initGlobalErrorHandlers = () => {
         }
       });
       observer.observe({ entryTypes: ["longtask"] });
-    } catch {
-      // longtask not supported
-    }
+    } catch {}
   }
 };
