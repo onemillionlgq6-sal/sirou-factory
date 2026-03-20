@@ -136,7 +136,7 @@ const SovereignCapabilities = () => {
               <div className={`h-7 w-7 rounded-lg bg-gradient-to-br ${cat.color} flex items-center justify-center`}>
                 <cat.icon className="h-3.5 w-3.5 text-white" />
               </div>
-              <h3 className="text-sm font-display font-semibold tracking-wide text-foreground">{t(cat.titleKey as any)}</h3>
+              <h3 className="text-sm font-semibold text-foreground">{t(cat.titleKey as any)}</h3>
             </div>
             <div className="space-y-1.5">
               {cat.capabilities.map((cap) => (
