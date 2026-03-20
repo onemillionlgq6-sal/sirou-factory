@@ -469,6 +469,25 @@ const translations = {
     "testing.remote.btn": "اختبار عن بُعد",
     "testing.remote.exported": "تم تصدير حزمة التصحيح — جاهزة لمزرعة الأجهزة ✓",
     "testing.simulator.empty": "أنشئ تطبيقًا لمعاينته هنا",
+
+    // Compliance Panel
+    "compliance.title": "الامتثال والشؤون القانونية",
+    "compliance.tab.policy": "سياسة Play",
+    "compliance.tab.legal": "الحزمة القانونية",
+    "compliance.tab.ota": "تحديثات OTA",
+    "compliance.check.run": "تشغيل فحص السياسة",
+    "compliance.check.passed": "جميع فحوصات Google Play ناجحة ✓",
+    "compliance.check.failed": "تم العثور على مشاكل — أصلحها قبل الإرسال",
+    "compliance.legal.desc": "مستندات قانونية مُولّدة تلقائيًا بناءً على ميزات الأجهزة واستخدام البيانات.",
+    "compliance.legal.privacy": "سياسة الخصوصية",
+    "compliance.legal.privacy.desc": "مخصصة لأذونات تطبيقك وجمع البيانات",
+    "compliance.legal.tos": "شروط الخدمة",
+    "compliance.legal.tos.desc": "شروط قياسية تغطي الاستخدام والمسؤولية والملكية الفكرية",
+    "compliance.legal.downloaded": "تم تنزيل المستند القانوني ✓",
+    "compliance.legal.note": "هذه القوالب مُولّدة تلقائيًا. راجعها مع متخصص قانوني قبل النشر.",
+    "compliance.ota.push": "إرسال تحديث التكوين",
+    "compliance.ota.pushed": "تم إرسال تحديث OTA ✓",
+    "compliance.ota.empty": "لا توجد تحديثات OTA بعد",
   },
 } as const;
 

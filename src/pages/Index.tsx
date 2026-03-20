@@ -244,6 +244,9 @@ const Index = () => {
               <ErrorBoundary moduleName="BuildGuard" fallbackTitleAr="خطأ في حارس البناء">
                 <BuildGuardPanel />
               </ErrorBoundary>
+              <ErrorBoundary moduleName="CompliancePanel" fallbackTitleAr="خطأ في لوحة الامتثال">
+                <CompliancePanel blueprint={blueprint} appName={appName} />
+              </ErrorBoundary>
             </div>
           </div>
         </div>
