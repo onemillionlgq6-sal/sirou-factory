@@ -17,7 +17,7 @@ interface VaultEntry {
   id: string;
   label: string;
   value: string;
-  category: "api" | "certificate" | "token";
+  category: "api" | "certificate" | "token" | "keystore";
   addedAt: string;
 }
 
