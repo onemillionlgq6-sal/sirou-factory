@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Factory, Shield, Zap, Languages } from "lucide-react";
+import { Shield, Zap, Languages } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,6 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import SovereignIcon from "./SovereignIcon";
 
 interface FactoryHeaderProps {
   isBackendConnected?: boolean;
@@ -21,16 +22,15 @@ const FactoryHeader = ({ isBackendConnected = false }: FactoryHeaderProps) => {
       animate={{ opacity: 1, y: 0 }}
       className="flex items-center justify-between py-6"
     >
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl sf-gradient-bg flex items-center justify-center sf-glow-green">
-          <Factory className="h-5 w-5 text-primary-foreground" />
-        </div>
+      {/* Brand block — always LTR English, never translated */}
+      <div className="flex items-center gap-3" dir="ltr">
+        <SovereignIcon size="md" glowing />
         <div>
-          <h1 className="text-xl font-bold text-foreground tracking-tight">
-            {t("app.title")}
+          <h1 className="text-xl font-display font-bold text-foreground tracking-wide">
+            Sirou Factory
           </h1>
-          <p className="text-xs text-muted-foreground">
-            {t("app.subtitle")}
+          <p className="text-[11px] text-muted-foreground tracking-wider uppercase font-medium">
+            Application Builder Expert
           </p>
         </div>
       </div>
