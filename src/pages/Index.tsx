@@ -4,6 +4,7 @@ import AppIdeaInput from "@/components/factory/AppIdeaInput";
 import TransparencyCenter from "@/components/factory/TransparencyCenter";
 import type { ActionNotification } from "@/components/factory/TransparencyCenter";
 import AppPreview from "@/components/factory/AppPreview";
+import TestingCenter from "@/components/factory/TestingCenter";
 import FactoryActions from "@/components/factory/FactoryActions";
 import AIPlannerEngine from "@/components/factory/AIPlannerEngine";
 import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
@@ -218,6 +219,13 @@ const Index = () => {
             <div className="space-y-6">
               <ErrorBoundary moduleName="AppPreview" fallbackTitleAr="خطأ في المعاينة">
                 <AppPreview isGenerated={phase === "complete"} appName={appName} />
+              </ErrorBoundary>
+              <ErrorBoundary moduleName="TestingCenter" fallbackTitleAr="خطأ في مركز الاختبار">
+                <TestingCenter
+                  blueprint={blueprint}
+                  appName={appName}
+                  isGenerated={phase === "complete"}
+                />
               </ErrorBoundary>
               <ErrorBoundary moduleName="FactoryActions" fallbackTitleAr="خطأ في أدوات التحكم">
                 <FactoryActions

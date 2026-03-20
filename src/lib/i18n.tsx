@@ -222,6 +222,16 @@ const translations = {
     "style.flat": "Flat",
     "style.material": "Material",
     "style.custom": "Custom",
+
+    // Testing Center
+    "testing.title": "Testing & Simulation Center",
+    "testing.scan.run": "Pre-Build Scan",
+    "testing.scan.passed": "All checks passed — Ready to build ✓",
+    "testing.scan.failed": "Issues found — Review before building",
+    "testing.scan.time": "Scan time",
+    "testing.remote.btn": "Remote Test",
+    "testing.remote.exported": "Debug bundle exported — Ready for Device Farm ✓",
+    "testing.simulator.empty": "Generate an app to preview it here",
   },
   ar: {
     "app.title": "مصنع سيرو",
@@ -430,6 +440,16 @@ const translations = {
     "style.flat": "مسطّح",
     "style.material": "ماتيريال",
     "style.custom": "مخصص",
+
+    // Testing Center
+    "testing.title": "مركز الاختبار والمحاكاة",
+    "testing.scan.run": "فحص ما قبل البناء",
+    "testing.scan.passed": "جميع الفحوصات ناجحة — جاهز للبناء ✓",
+    "testing.scan.failed": "تم العثور على مشاكل — راجعها قبل البناء",
+    "testing.scan.time": "وقت الفحص",
+    "testing.remote.btn": "اختبار عن بُعد",
+    "testing.remote.exported": "تم تصدير حزمة التصحيح — جاهزة لمزرعة الأجهزة ✓",
+    "testing.simulator.empty": "أنشئ تطبيقًا لمعاينته هنا",
   },
 } as const;
 
