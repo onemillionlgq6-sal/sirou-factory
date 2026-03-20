@@ -11,7 +11,7 @@ import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
 import InteractiveBlueprint from "@/components/factory/InteractiveBlueprint";
 import AppBuilderEngine from "@/components/factory/AppBuilderEngine";
 import HealthDashboard from "@/components/factory/HealthDashboard";
-import SovereignCapabilities from "@/components/factory/SovereignCapabilities";
+import SovereignCoreLauncher from "@/components/factory/SovereignCoreLauncher";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import BuildGuardPanel from "@/components/factory/BuildGuardPanel";
 import CompliancePanel from "@/components/factory/CompliancePanel";
@@ -251,10 +251,10 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Full-width Sovereign Capabilities Center */}
+          {/* Sovereign Core Launcher */}
           <div className="pb-12">
-            <ErrorBoundary moduleName="SovereignCapabilities" fallbackTitleAr="خطأ في مركز القدرات">
-              <SovereignCapabilities />
+            <ErrorBoundary moduleName="SovereignCoreLauncher" fallbackTitleAr="خطأ في مركز القدرات">
+              <SovereignCoreLauncher />
             </ErrorBoundary>
           </div>
         </div>
