@@ -13,6 +13,13 @@ import {
   generateDependencyLock,
   sha256,
 } from "@/lib/deterministic-build";
+import {
+  BUILD_GRADLE_APP,
+  PROGUARD_RULES,
+  ANDROID_MANIFEST,
+  ANDROID_CONFIG,
+  generateAndroidBuildGuide,
+} from "@/lib/android-build";
 
 /**
  * Generate a portable production bundle as a downloadable JSON
@@ -56,6 +63,13 @@ export const exportFactoryState = async () => {
         "nginx.conf": NGINX_CONF,
         "docker-compose.yml": DOCKER_COMPOSE,
         "README.md": SELF_HOST_README,
+      },
+      android: {
+        "build.gradle (app)": BUILD_GRADLE_APP,
+        "proguard-rules.pro": PROGUARD_RULES,
+        "AndroidManifest.xml": ANDROID_MANIFEST,
+        "BUILD_GUIDE.md": generateAndroidBuildGuide(),
+        config: ANDROID_CONFIG,
       },
     };
 
