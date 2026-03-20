@@ -11,6 +11,7 @@ import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
 import InteractiveBlueprint from "@/components/factory/InteractiveBlueprint";
 import AppBuilderEngine from "@/components/factory/AppBuilderEngine";
 import HealthDashboard from "@/components/factory/HealthDashboard";
+import SovereignCapabilities from "@/components/factory/SovereignCapabilities";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import BuildGuardPanel from "@/components/factory/BuildGuardPanel";
 import CompliancePanel from "@/components/factory/CompliancePanel";
@@ -248,6 +249,13 @@ const Index = () => {
                 <CompliancePanel blueprint={blueprint} appName={appName} />
               </ErrorBoundary>
             </div>
+          </div>
+
+          {/* Full-width Sovereign Capabilities Center */}
+          <div className="pb-12">
+            <ErrorBoundary moduleName="SovereignCapabilities" fallbackTitleAr="خطأ في مركز القدرات">
+              <SovereignCapabilities />
+            </ErrorBoundary>
           </div>
         </div>
       </div>
