@@ -64,6 +64,13 @@ export const exportFactoryState = async () => {
         "docker-compose.yml": DOCKER_COMPOSE,
         "README.md": SELF_HOST_README,
       },
+      android: {
+        "build.gradle (app)": BUILD_GRADLE_APP,
+        "proguard-rules.pro": PROGUARD_RULES,
+        "AndroidManifest.xml": ANDROID_MANIFEST,
+        "BUILD_GUIDE.md": generateAndroidBuildGuide(),
+        config: ANDROID_CONFIG,
+      },
     };
 
     // Deterministic hash of the entire bundle (before hash insertion)
