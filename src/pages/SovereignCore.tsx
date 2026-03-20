@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Shield } from "lucide-react";
+import { ArrowLeft, ArrowRight, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SovereignCapabilities from "@/components/factory/SovereignCapabilities";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -9,14 +9,17 @@ import factoryBg from "@/assets/factory-bg.jpg";
 
 const SovereignCore = () => {
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const isRTL = lang === "ar";
+  const BackArrow = isRTL ? ArrowRight : ArrowLeft;
 
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-fixed"
       style={{ backgroundImage: `url(${factoryBg})` }}
+      dir={isRTL ? "rtl" : "ltr"}
     >
-      <div className="min-h-screen bg-black/50 backdrop-blur-sm">
+      <div className="min-h-screen bg-black/55 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Top bar */}
           <motion.div
@@ -28,18 +31,18 @@ const SovereignCore = () => {
               variant="outline"
               size="sm"
               onClick={() => navigate("/")}
-              className="gap-2 sf-glass-subtle text-white border-white/20 hover:bg-white/10"
+              className="gap-2 bg-white/10 border-white/25 text-white hover:bg-white/20 backdrop-blur-md"
             >
-              <ArrowLeft className="h-4 w-4" />
-              {t("sovereign.back" as any)}
+              <BackArrow className="h-4 w-4" />
+              {isRTL ? "رجوع" : "Back"}
             </Button>
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl sf-gradient-bg flex items-center justify-center shadow-lg">
+            <div className={`flex items-center gap-4 ${isRTL ? "mr-2" : "ml-2"}`}>
+              <div className="h-11 w-11 rounded-xl sf-gradient-bg flex items-center justify-center shadow-lg shrink-0">
                 <Shield className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">{t("cap.title")}</h1>
-                <p className="text-xs text-white/60">{t("cap.subtitle")}</p>
+                <p className="text-sm text-white/75">{t("cap.subtitle")}</p>
               </div>
             </div>
           </motion.div>
