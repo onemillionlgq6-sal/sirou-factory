@@ -64,7 +64,7 @@ const SovereignCapabilities = () => {
       icon: Shield,
       color: "from-red-500 to-orange-500",
       capabilities: [
-        { id: "aes", nameKey: "cap.aes.name", descKey: "cap.aes.desc", icon: Lock, status: "active", testAction: () => runTest("AES-256 Vault") },
+        { id: "aes", nameKey: "cap.aes.name", descKey: "cap.aes.desc", icon: Lock, status: "active", testAction: () => runTest("aes", "AES-256 Vault") },
         { id: "bio", nameKey: "cap.bio.name", descKey: "cap.bio.desc", icon: Fingerprint, status: "active", testAction: () => runTest("Biometric Auth") },
         { id: "r8", nameKey: "cap.r8.name", descKey: "cap.r8.desc", icon: Eye, status: "active" },
         { id: "integrity", nameKey: "cap.integrity.name", descKey: "cap.integrity.desc", icon: ShieldCheck, status: "active", testAction: () => runTest("Integrity Check") },
