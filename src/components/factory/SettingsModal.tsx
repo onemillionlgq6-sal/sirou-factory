@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { Settings, Moon, Sun, Globe, Paintbrush } from "lucide-react";
 import { usePlatform } from "@/hooks/use-platform";
 import type { VisualStyle } from "@/lib/platform";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
