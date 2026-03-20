@@ -1,9 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SovereignCapabilities from "@/components/factory/SovereignCapabilities";
-import SovereignIcon from "@/components/factory/SovereignIcon";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useI18n } from "@/lib/i18n";
 import factoryBg from "@/assets/factory-bg.jpg";
@@ -26,24 +25,26 @@ const SovereignCore = () => {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-5 mb-8"
+            className="flex items-center gap-4 mb-8"
           >
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigate("/")}
-              className="gap-2 bg-white/10 border-white/25 text-white hover:bg-white/20 backdrop-blur-md font-display tracking-wider text-xs uppercase"
+              className="gap-2 bg-white/10 border-white/25 text-white hover:bg-white/20 backdrop-blur-md text-xs"
             >
               <BackArrow className="h-4 w-4" />
-              {isRTL ? "رجوع" : "BACK"}
+              {isRTL ? "رجوع" : "Back"}
             </Button>
-            <div className={`flex items-center gap-5 ${isRTL ? "mr-2" : "ml-2"}`}>
-              <SovereignIcon size="md" glowing />
+            <div className={`flex items-center gap-3 ${isRTL ? "mr-2" : "ml-2"}`}>
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Shield className="h-5 w-5 text-primary-foreground" />
+              </div>
               <div>
-                <h1 className="text-xl font-display font-bold tracking-wide text-white">
+                <h1 className="text-xl font-bold text-white">
                   {t("cap.title")}
                 </h1>
-                <p className="text-sm text-white/75 font-sans">{t("cap.subtitle")}</p>
+                <p className="text-sm text-white/75">{t("cap.subtitle")}</p>
               </div>
             </div>
           </motion.div>

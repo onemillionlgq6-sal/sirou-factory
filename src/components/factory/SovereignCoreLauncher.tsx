@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { Shield, ChevronRight } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
-import SovereignIcon from "./SovereignIcon";
 
 const SovereignCoreLauncher = () => {
   const { t } = useI18n();
@@ -49,24 +48,25 @@ const SovereignCoreLauncher = () => {
       className="w-full sf-glass rounded-2xl p-5 text-left group transition-all hover:shadow-lg hover:shadow-primary/10 disabled:opacity-70"
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-5">
-          <SovereignIcon size="md" glowing />
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+            <Shield className="h-6 w-6 text-primary-foreground" />
+          </div>
 
           <div>
-            <h3 className="text-base font-display font-bold tracking-wide text-foreground group-hover:text-primary transition-colors">
-              {t("sovereign.core.title" as any) || "SOVEREIGN CORE"}
+            <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
+              {t("sovereign.core.title" as any) || "Sovereign Core"}
             </h3>
-            <p className="text-xs text-muted-foreground mt-0.5 font-sans">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {t("sovereign.core.desc" as any) || "Engine room · Feature inventory · Strategic intelligence"}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Status badge */}
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sf-safe/10 border border-sf-safe/20">
             <div className="h-2 w-2 rounded-full bg-sf-safe animate-pulse" />
-            <span className="text-[10px] font-display font-semibold tracking-wider text-sf-safe whitespace-nowrap uppercase">
+            <span className="text-[10px] font-semibold tracking-wider text-sf-safe whitespace-nowrap uppercase">
               {t("sovereign.core.status" as any) || "Secure & Active"}
             </span>
           </div>
@@ -75,10 +75,9 @@ const SovereignCoreLauncher = () => {
         </div>
       </div>
 
-      {/* Mobile status */}
       <div className="sm:hidden flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-full bg-sf-safe/10 border border-sf-safe/20 w-fit">
         <div className="h-2 w-2 rounded-full bg-sf-safe animate-pulse" />
-        <span className="text-[10px] font-display font-semibold tracking-wider text-sf-safe uppercase">
+        <span className="text-[10px] font-semibold tracking-wider text-sf-safe uppercase">
           {t("sovereign.core.status" as any) || "Secure & Active"}
         </span>
       </div>
