@@ -120,10 +120,11 @@ const SecureVault = ({ open, onOpenChange }: SecureVaultProps) => {
     });
   };
 
-  const categoryLabels = {
+  const categoryLabels: Record<VaultEntry["category"], string> = {
     api: t("vault.cat.api"),
     certificate: t("vault.cat.cert"),
     token: t("vault.cat.token"),
+    keystore: t("vault.cat.keystore" as any) || "Keystore",
   };
 
   return (
