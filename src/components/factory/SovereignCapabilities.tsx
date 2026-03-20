@@ -148,7 +148,7 @@ const SovereignCapabilities = () => {
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full bg-sf-safe animate-pulse" />
                       <cap.icon className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-xs font-medium text-foreground">{t(cap.nameKey as any)}</span>
+                      <span className="text-xs font-mono font-medium text-foreground">{t(cap.nameKey as any)}</span>
                     </div>
                     <ChevronRight className={`h-3 w-3 text-muted-foreground transition-transform ${expandedId === cap.id ? "rotate-90" : ""}`} />
                   </button>
