@@ -440,6 +440,16 @@ const translations = {
     "style.flat": "مسطّح",
     "style.material": "ماتيريال",
     "style.custom": "مخصص",
+
+    // Testing Center
+    "testing.title": "مركز الاختبار والمحاكاة",
+    "testing.scan.run": "فحص ما قبل البناء",
+    "testing.scan.passed": "جميع الفحوصات ناجحة — جاهز للبناء ✓",
+    "testing.scan.failed": "تم العثور على مشاكل — راجعها قبل البناء",
+    "testing.scan.time": "وقت الفحص",
+    "testing.remote.btn": "اختبار عن بُعد",
+    "testing.remote.exported": "تم تصدير حزمة التصحيح — جاهزة لمزرعة الأجهزة ✓",
+    "testing.simulator.empty": "أنشئ تطبيقًا لمعاينته هنا",
   },
 } as const;
 
