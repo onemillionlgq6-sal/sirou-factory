@@ -162,16 +162,21 @@ const SovereignCapabilities = () => {
                         className="overflow-hidden"
                       >
                         <div className="px-3 pb-2 pt-1 ms-7">
-                          <p className="text-[11px] text-muted-foreground mb-2">{t(cap.descKey as any)}</p>
+                          <p className="text-[11px] text-white/60 mb-2">{t(cap.descKey as any)}</p>
                           {cap.testAction && (
                             <Button
                               size="sm"
                               variant="outline"
+                              disabled={testingId === cap.id}
                               onClick={(e) => { e.stopPropagation(); cap.testAction!(); }}
-                              className="h-6 text-[10px] px-2 gap-1"
+                              className="h-6 text-[10px] px-2 gap-1 bg-white/10 border-white/20 text-white hover:bg-white/20 disabled:opacity-70"
                             >
-                              <Play className="h-2.5 w-2.5" />
-                              {t("cap.run.test")}
+                              {testingId === cap.id ? (
+                                <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                              ) : (
+                                <Play className="h-2.5 w-2.5" />
+                              )}
+                              {testingId === cap.id ? "Testing..." : t("cap.run.test")}
                             </Button>
                           )}
                         </div>
