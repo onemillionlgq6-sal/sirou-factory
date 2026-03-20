@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield,
@@ -23,6 +23,7 @@ import {
   KeyRound,
   FileText,
   Scale,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -47,10 +48,15 @@ interface CapabilityCategory {
 const SovereignCapabilities = () => {
   const { t } = useI18n();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [testingId, setTestingId] = useState<string | null>(null);
 
-  const runTest = (name: string) => {
-    toast.success(`${name} — Live test passed ✓`);
-  };
+  const runTest = useCallback((id: string, name: string) => {
+    setTestingId(id);
+    setTimeout(() => {
+      toast.success(`${name} — Live test passed ✓`);
+      setTestingId(null);
+    }, 800);
+  }, []);
 
   const categories: CapabilityCategory[] = [
     {
