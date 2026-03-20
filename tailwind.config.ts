@@ -13,12 +13,8 @@ export default {
       },
     },
     extend: {
-      fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
-        display: ["Orbitron", "Inter", "system-ui", "sans-serif"],
-        arabic: ["Cairo", "system-ui", "sans-serif"],
-      },
+
+
       colors: {
         "sf-safe": {
           DEFAULT: "hsl(var(--sf-safe))",
