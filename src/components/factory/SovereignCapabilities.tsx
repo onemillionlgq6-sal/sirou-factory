@@ -123,8 +123,8 @@ const SovereignCapabilities = () => {
           <Shield className="h-5 w-5 text-primary-foreground" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-foreground">{t("cap.title")}</h2>
-          <p className="text-xs text-muted-foreground">{t("cap.subtitle")}</p>
+      <h2 className="text-lg font-display font-bold tracking-wide text-foreground">{t("cap.title")}</h2>
+          <p className="text-xs text-muted-foreground font-sans">{t("cap.subtitle")}</p>
         </div>
       </div>
 
@@ -136,7 +136,7 @@ const SovereignCapabilities = () => {
               <div className={`h-7 w-7 rounded-lg bg-gradient-to-br ${cat.color} flex items-center justify-center`}>
                 <cat.icon className="h-3.5 w-3.5 text-white" />
               </div>
-              <h3 className="text-sm font-semibold text-foreground">{t(cat.titleKey as any)}</h3>
+              <h3 className="text-sm font-display font-semibold tracking-wide text-foreground">{t(cat.titleKey as any)}</h3>
             </div>
             <div className="space-y-1.5">
               {cat.capabilities.map((cap) => (
@@ -148,7 +148,7 @@ const SovereignCapabilities = () => {
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full bg-sf-safe animate-pulse" />
                       <cap.icon className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-xs font-medium text-foreground">{t(cap.nameKey as any)}</span>
+                      <span className="text-xs font-mono font-medium text-foreground">{t(cap.nameKey as any)}</span>
                     </div>
                     <ChevronRight className={`h-3 w-3 text-muted-foreground transition-transform ${expandedId === cap.id ? "rotate-90" : ""}`} />
                   </button>
