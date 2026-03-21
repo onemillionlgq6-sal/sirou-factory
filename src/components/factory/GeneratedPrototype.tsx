@@ -1,9 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, Settings, User, Bell, Search, ShoppingCart, Heart, Star,
   ChevronRight, Menu, BarChart3, Camera, MapPin, QrCode, Mic,
   Plus, Trash2, Check, X, ArrowLeft, Send, Image, Package,
+  LogIn, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { AppBlueprint } from "./AIPlannerEngine";
@@ -13,14 +14,10 @@ interface GeneratedPrototypeProps {
   blueprint: AppBlueprint | null;
 }
 
-type Screen = "home" | "dashboard" | "profile" | "cart" | "detail" | "camera" | "scanner";
+type Screen = "splash" | "login" | "home" | "dashboard" | "profile" | "cart" | "detail" | "camera" | "settings";
 
-/**
- * Fully functional prototype renderer.
- * Every button has a real handler, state is managed, hardware APIs are bridged.
- */
 const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => {
-  const [screen, setScreen] = useState<Screen>("home");
+  const [screen, setScreen] = useState<Screen>("splash");
   const [items, setItems] = useState([
     { id: 1, name: "Premium Feature", done: false },
     { id: 2, name: "Analytics Module", done: false },
@@ -32,8 +29,34 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
   const [notifCount, setNotifCount] = useState(3);
   const [isRecording, setIsRecording] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  // Login form state
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  // Splash
+  const [splashDone, setSplashDone] = useState(false);
+
+  // Auto-advance splash screen
+  useState(() => {
+    setTimeout(() => { setSplashDone(true); setScreen("login"); }, 2500);
+  });
 
   const navigateTo = useCallback((s: Screen) => setScreen(s), []);
+
+  const handleLogin = useCallback(() => {
+    setLoginError("");
+    if (!email.trim()) { setLoginError("Please enter your email"); return; }
+    if (!email.includes("@")) { setLoginError("Please enter a valid email"); return; }
+    if (password.length < 4) { setLoginError("Password must be at least 4 characters"); return; }
+    setIsLoggingIn(true);
+    setTimeout(() => {
+      setIsLoggingIn(false);
+      setScreen("home");
+      toast.success("Welcome! You're now logged in 🎉");
+    }, 1200);
+  }, [email, password]);
 
   const toggleItem = useCallback((id: number) => {
     setItems(prev => prev.map(i => i.id === id ? { ...i, done: !i.done } : i));
@@ -41,10 +64,10 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
   }, []);
 
   const addItem = useCallback(() => {
-    if (!newItem.trim()) { toast.error("Enter item name"); return; }
+    if (!newItem.trim()) { toast.error("Please enter a name first"); return; }
     setItems(prev => [...prev, { id: Date.now(), name: newItem.trim(), done: false }]);
     setNewItem("");
-    toast.success("Item added");
+    toast.success("Item added successfully");
   }, [newItem]);
 
   const removeItem = useCallback((id: number) => {
@@ -61,124 +84,83 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
     });
   }, []);
 
-  const addToCart = useCallback(() => {
-    setCartCount(c => c + 1);
-    toast.success("Added to cart 🛒");
-  }, []);
+  const addToCart = useCallback(() => { setCartCount(c => c + 1); toast.success("Added to cart 🛒"); }, []);
+  const clearNotifs = useCallback(() => { setNotifCount(0); toast("Notifications cleared"); }, []);
 
-  const clearNotifs = useCallback(() => {
-    setNotifCount(0);
-    toast("Notifications cleared");
-  }, []);
-
-  // Hardware: Camera
   const handleCamera = useCallback(async () => {
     try {
       const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
+      input.type = "file"; input.accept = "image/*";
       input.setAttribute("capture", "environment");
       input.onchange = () => {
         const file = input.files?.[0];
         if (file) {
           const reader = new FileReader();
-          reader.onload = () => {
-            setPhotoPreview(reader.result as string);
-            setScreen("camera");
-            toast.success("Photo captured!");
-          };
+          reader.onload = () => { setPhotoPreview(reader.result as string); setScreen("camera"); toast.success("Photo captured!"); };
           reader.readAsDataURL(file);
         }
       };
       input.click();
-    } catch {
-      toast("📷 Camera: Permission required or not available in this browser");
-    }
+    } catch { toast("📷 Camera not available in this browser"); }
   }, []);
 
-  // Hardware: GPS
   const handleGPS = useCallback(() => {
     if ("geolocation" in navigator) {
       toast("📍 Acquiring location...");
       navigator.geolocation.getCurrentPosition(
-        (pos) => toast.success(`📍 Location: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`),
+        (pos) => toast.success(`📍 ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`),
         () => toast.error("📍 Location permission denied")
       );
-    } else {
-      toast("📍 GPS: Not available in this browser");
-    }
+    } else { toast("📍 GPS not available"); }
   }, []);
 
-  // Hardware: QR Scanner
   const handleQR = useCallback(() => {
-    const content = window.prompt("QR Scanner — Enter QR content manually (browser fallback):");
+    const content = window.prompt("QR Scanner — Enter content (browser fallback):");
     if (content) toast.success(`QR Scanned: ${content}`);
     else toast("QR scan cancelled");
   }, []);
 
-  // Hardware: Mic
   const handleMic = useCallback(async () => {
     if (!isRecording) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         setIsRecording(true);
-        toast("🎙️ Recording started...");
-        setTimeout(() => {
-          stream.getTracks().forEach(t => t.stop());
-          setIsRecording(false);
-          toast.success("🎙️ Recording saved (3s demo)");
-        }, 3000);
-      } catch {
-        toast("🎙️ Microphone: Permission denied or not available");
-      }
-    } else {
-      setIsRecording(false);
-      toast("🎙️ Recording stopped");
-    }
+        toast("🎙️ Recording...");
+        setTimeout(() => { stream.getTracks().forEach(t => t.stop()); setIsRecording(false); toast.success("🎙️ Recording saved (3s)"); }, 3000);
+      } catch { toast("🎙️ Microphone not available"); }
+    } else { setIsRecording(false); toast("🎙️ Stopped"); }
   }, [isRecording]);
 
   // ─── Status Bar ───
   const StatusBar = () => (
     <div className="flex items-center justify-between px-4 py-1.5 text-[10px] text-[hsl(210,10%,55%)]">
       <span>9:41</span>
-      <div className="flex items-center gap-1.5">
-        <div className="w-4 h-2 rounded-sm border border-[hsl(210,10%,55%)]">
-          <div className="w-3 h-1.5 rounded-[1px] bg-[hsl(90,60%,50%)] m-[0.5px]" />
-        </div>
+      <div className="w-4 h-2 rounded-sm border border-[hsl(210,10%,55%)]">
+        <div className="w-3 h-1.5 rounded-[1px] bg-[hsl(90,60%,50%)] m-[0.5px]" />
       </div>
     </div>
   );
 
-  // ─── App Header ───
   const AppHeader = ({ title, showBack }: { title: string; showBack?: boolean }) => (
     <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(220,20%,16%)]">
       {showBack ? (
-        <button onClick={() => navigateTo("home")}>
-          <ArrowLeft className="h-5 w-5 text-[hsl(55,90%,55%)]" />
-        </button>
+        <button onClick={() => navigateTo("home")}><ArrowLeft className="h-5 w-5 text-[hsl(55,90%,55%)]" /></button>
       ) : (
-        <button onClick={() => toast("Menu opened")}>
-          <Menu className="h-5 w-5 text-[hsl(210,10%,55%)]" />
-        </button>
+        <button onClick={() => toast("Menu")}><Menu className="h-5 w-5 text-[hsl(210,10%,55%)]" /></button>
       )}
       <h1 className="text-sm font-bold tracking-wide">{title}</h1>
       <div className="flex items-center gap-3">
-        <button onClick={() => toast("Search: Feature coming soon")}>
-          <Search className="h-4 w-4 text-[hsl(210,10%,55%)]" />
-        </button>
+        <button onClick={() => toast("Search: Coming soon")}><Search className="h-4 w-4 text-[hsl(210,10%,55%)]" /></button>
         <button onClick={clearNotifs} className="relative">
           <Bell className="h-4 w-4 text-[hsl(210,10%,55%)]" />
           {notifCount > 0 && (
-            <span className="absolute -top-1 -end-1 w-3.5 h-3.5 rounded-full bg-[hsl(0,72%,55%)] text-[8px] text-white flex items-center justify-center font-bold">
-              {notifCount}
-            </span>
+            <span className="absolute -top-1 -end-1 w-3.5 h-3.5 rounded-full bg-[hsl(0,72%,55%)] text-[8px] text-white flex items-center justify-center font-bold">{notifCount}</span>
           )}
         </button>
       </div>
     </div>
   );
 
-  // ─── Bottom Navigation ───
   const BottomNav = () => (
     <div className="flex items-center justify-around py-2.5 border-t border-[hsl(220,20%,16%)] bg-[hsl(220,20%,10%)]">
       {([
@@ -191,23 +173,91 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
           <div className="relative">
             <Icon className={`h-5 w-5 ${screen === s ? "text-[hsl(55,90%,55%)]" : "text-[hsl(210,10%,40%)]"}`} />
             {label === "Cart" && cartCount > 0 && (
-              <span className="absolute -top-1 -end-1 w-3.5 h-3.5 rounded-full bg-[hsl(0,72%,55%)] text-[8px] text-white flex items-center justify-center font-bold">
-                {cartCount}
-              </span>
+              <span className="absolute -top-1 -end-1 w-3.5 h-3.5 rounded-full bg-[hsl(0,72%,55%)] text-[8px] text-white flex items-center justify-center font-bold">{cartCount}</span>
             )}
           </div>
-          <span className={`text-[10px] ${screen === s ? "text-[hsl(55,90%,55%)] font-medium" : "text-[hsl(210,10%,40%)]"}`}>
-            {label}
-          </span>
+          <span className={`text-[10px] ${screen === s ? "text-[hsl(55,90%,55%)] font-medium" : "text-[hsl(210,10%,40%)]"}`}>{label}</span>
         </button>
       ))}
     </div>
   );
 
-  // ─── Screens ───
+  // ─── Splash Screen ───
+  const SplashScreen = () => (
+    <div className="h-full flex flex-col items-center justify-center"
+      style={{ background: "linear-gradient(180deg, hsl(220,25%,8%) 0%, hsl(220,30%,12%) 100%)" }}>
+      <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.6, ease: "easeOut" }}>
+        <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4 mx-auto"
+          style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>
+          <Package className="h-10 w-10 text-[hsl(220,25%,8%)]" />
+        </div>
+      </motion.div>
+      <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+        className="text-lg font-bold">{appName || "My App"}</motion.p>
+      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+        className="text-xs text-[hsl(210,10%,55%)] mt-1">Powered by Sirou Factory</motion.p>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} className="mt-6">
+        <Loader2 className="h-5 w-5 text-[hsl(55,90%,55%)] animate-spin" />
+      </motion.div>
+    </div>
+  );
+
+  // ─── Login Screen ───
+  const LoginScreen = () => (
+    <div className="flex-1 overflow-auto p-6 flex flex-col justify-center">
+      <div className="text-center mb-6">
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3"
+          style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>
+          <LogIn className="h-7 w-7 text-[hsl(220,25%,8%)]" />
+        </div>
+        <p className="text-lg font-bold">Welcome Back</p>
+        <p className="text-xs text-[hsl(210,10%,55%)] mt-1">Sign in to continue</p>
+      </div>
+
+      <div className="space-y-3">
+        <div className="relative">
+          <Mail className="absolute start-3 top-3 h-4 w-4 text-[hsl(210,10%,40%)]" />
+          <input value={email} onChange={e => { setEmail(e.target.value); setLoginError(""); }}
+            placeholder="Email address" type="email"
+            className="w-full bg-[hsl(220,20%,12%)] border border-[hsl(220,20%,18%)] rounded-xl ps-10 pe-3 py-2.5 text-sm text-white placeholder:text-[hsl(210,10%,40%)] outline-none focus:border-[hsl(55,90%,55%)]" />
+        </div>
+        <div className="relative">
+          <Lock className="absolute start-3 top-3 h-4 w-4 text-[hsl(210,10%,40%)]" />
+          <input value={password} onChange={e => { setPassword(e.target.value); setLoginError(""); }}
+            placeholder="Password" type={showPassword ? "text" : "password"}
+            onKeyDown={e => e.key === "Enter" && handleLogin()}
+            className="w-full bg-[hsl(220,20%,12%)] border border-[hsl(220,20%,18%)] rounded-xl ps-10 pe-10 py-2.5 text-sm text-white placeholder:text-[hsl(210,10%,40%)] outline-none focus:border-[hsl(55,90%,55%)]" />
+          <button onClick={() => setShowPassword(!showPassword)} className="absolute end-3 top-3">
+            {showPassword ? <EyeOff className="h-4 w-4 text-[hsl(210,10%,40%)]" /> : <Eye className="h-4 w-4 text-[hsl(210,10%,40%)]" />}
+          </button>
+        </div>
+
+        {loginError && (
+          <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 text-[hsl(0,72%,60%)] text-xs px-1">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+            <span>{loginError}</span>
+          </motion.div>
+        )}
+
+        <button onClick={handleLogin} disabled={isLoggingIn}
+          className="w-full py-3 rounded-xl text-sm font-bold text-[hsl(220,25%,8%)] active:scale-[0.98] transition-transform disabled:opacity-60 flex items-center justify-center gap-2"
+          style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>
+          {isLoggingIn ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {isLoggingIn ? "Signing in..." : "Sign In"}
+        </button>
+
+        <button onClick={() => toast("Password reset: Feature coming soon")}
+          className="w-full text-center text-xs text-[hsl(55,90%,55%)] mt-2">
+          Forgot password?
+        </button>
+      </div>
+    </div>
+  );
+
+  // ─── Home Screen ───
   const HomeScreen = () => (
     <div className="flex-1 overflow-auto p-4 space-y-4">
-      {/* Hero */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
         className="rounded-xl p-4 relative overflow-hidden"
         style={{ background: "linear-gradient(135deg, hsl(55,90%,45%), hsl(90,60%,40%))" }}>
@@ -216,7 +266,6 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
         <p className="text-xs text-[hsl(220,25%,8%)] opacity-60 mt-1">{notifCount} new notifications</p>
       </motion.div>
 
-      {/* Stats */}
       <div className="grid grid-cols-3 gap-2">
         {[
           { icon: BarChart3, label: "Sales", val: "1.2K" },
@@ -232,19 +281,15 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
         ))}
       </div>
 
-      {/* Interactive List */}
       <div className="space-y-2">
         {items.map((item) => (
           <motion.div key={item.id} layout
             className="flex items-center justify-between p-3 rounded-lg bg-[hsl(220,20%,12%)] border border-[hsl(220,20%,18%)]">
             <div className="flex items-center gap-3">
               <button onClick={() => toggleItem(item.id)}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                  item.done ? "bg-[hsl(90,60%,45%)]" : ""
-                }`}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${item.done ? "bg-[hsl(90,60%,45%)]" : ""}`}
                 style={!item.done ? { background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" } : undefined}>
-                {item.done ? <Check className="h-4 w-4 text-[hsl(220,25%,8%)]" /> :
-                  <Settings className="h-4 w-4 text-[hsl(220,25%,8%)]" />}
+                {item.done ? <Check className="h-4 w-4 text-[hsl(220,25%,8%)]" /> : <Settings className="h-4 w-4 text-[hsl(220,25%,8%)]" />}
               </button>
               <span className={`text-sm font-medium ${item.done ? "line-through opacity-50" : ""}`}>{item.name}</span>
             </div>
@@ -263,7 +308,6 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
         ))}
       </div>
 
-      {/* Add Item */}
       <div className="flex gap-2">
         <input value={newItem} onChange={e => setNewItem(e.target.value)}
           onKeyDown={e => e.key === "Enter" && addItem()}
@@ -276,7 +320,6 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
         </button>
       </div>
 
-      {/* Hardware Actions */}
       <div className="grid grid-cols-4 gap-2">
         {[
           { icon: Camera, label: "Camera", handler: handleCamera },
@@ -294,7 +337,6 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
         ))}
       </div>
 
-      {/* CTA */}
       <button onClick={addToCart}
         className="w-full py-3 rounded-xl text-sm font-bold text-[hsl(220,25%,8%)] active:scale-[0.98] transition-transform"
         style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>
@@ -311,7 +353,7 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
           <User className="h-10 w-10 text-[hsl(220,25%,8%)]" />
         </div>
         <p className="font-bold text-lg">User Profile</p>
-        <p className="text-xs text-[hsl(210,10%,55%)]">user@sirou.app</p>
+        <p className="text-xs text-[hsl(210,10%,55%)]">{email || "user@sirou.app"}</p>
       </div>
       {["Edit Profile", "Preferences", "Security", "About"].map(item => (
         <button key={item} onClick={() => toast(`${item}: Coming soon`)}
@@ -320,6 +362,10 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
           <ChevronRight className="h-4 w-4 text-[hsl(210,10%,55%)]" />
         </button>
       ))}
+      <button onClick={() => { setScreen("login"); setEmail(""); setPassword(""); toast("Logged out"); }}
+        className="w-full py-3 rounded-xl text-sm font-bold border border-[hsl(0,72%,55%)/30] text-[hsl(0,72%,60%)] active:scale-[0.98] transition-transform">
+        Sign Out
+      </button>
     </div>
   );
 
@@ -339,14 +385,8 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
       ) : (
         <>
           <div className="p-3 rounded-lg bg-[hsl(220,20%,12%)] border border-[hsl(220,20%,18%)]">
-            <div className="flex justify-between">
-              <span className="text-sm">Items</span>
-              <span className="text-sm font-bold">{cartCount}</span>
-            </div>
-            <div className="flex justify-between mt-2">
-              <span className="text-sm">Total</span>
-              <span className="text-sm font-bold text-[hsl(55,90%,55%)]">${(cartCount * 29.99).toFixed(2)}</span>
-            </div>
+            <div className="flex justify-between"><span className="text-sm">Items</span><span className="text-sm font-bold">{cartCount}</span></div>
+            <div className="flex justify-between mt-2"><span className="text-sm">Total</span><span className="text-sm font-bold text-[hsl(55,90%,55%)]">${(cartCount * 29.99).toFixed(2)}</span></div>
           </div>
           <button onClick={() => { setCartCount(0); toast.success("Order placed! 🎉"); }}
             className="w-full py-3 rounded-xl text-sm font-bold text-[hsl(220,25%,8%)] active:scale-[0.98] transition-transform"
@@ -366,13 +406,9 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
           <div className="flex gap-2">
             <button onClick={() => { setPhotoPreview(null); navigateTo("home"); toast.success("Photo saved"); }}
               className="flex-1 py-3 rounded-xl text-sm font-bold text-[hsl(220,25%,8%)]"
-              style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>
-              Save
-            </button>
+              style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>Save</button>
             <button onClick={() => { setPhotoPreview(null); navigateTo("home"); }}
-              className="flex-1 py-3 rounded-xl text-sm font-bold border border-[hsl(220,20%,18%)] text-[hsl(210,10%,55%)]">
-              Discard
-            </button>
+              className="flex-1 py-3 rounded-xl text-sm font-bold border border-[hsl(220,20%,18%)] text-[hsl(210,10%,55%)]">Discard</button>
           </div>
         </>
       ) : (
@@ -384,31 +420,52 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
     </div>
   );
 
+  const SettingsScreen = () => (
+    <div className="flex-1 overflow-auto p-4 space-y-4">
+      <p className="text-lg font-bold">Settings</p>
+      {["Notifications", "Privacy", "Theme", "Language", "About App"].map(item => (
+        <button key={item} onClick={() => toast(`${item}: Coming soon`)}
+          className="w-full flex items-center justify-between p-3 rounded-lg bg-[hsl(220,20%,12%)] border border-[hsl(220,20%,18%)] active:scale-[0.98] transition-transform">
+          <span className="text-sm font-medium">{item}</span>
+          <ChevronRight className="h-4 w-4 text-[hsl(210,10%,55%)]" />
+        </button>
+      ))}
+    </div>
+  );
+
   const screenTitle: Record<Screen, string> = {
+    splash: appName || "App",
+    login: "Welcome",
     home: appName || "App",
     dashboard: "Dashboard",
     profile: "Profile",
     cart: "Cart",
     detail: "Details",
     camera: "Camera",
-    scanner: "Scanner",
+    settings: "Settings",
   };
+
+  const showNav = !["splash", "login"].includes(screen);
+  const showHeader = !["splash", "login"].includes(screen);
 
   return (
     <div className="h-[500px] flex flex-col bg-[hsl(220,25%,8%)] text-[hsl(210,15%,92%)] overflow-hidden">
-      <StatusBar />
-      <AppHeader title={screenTitle[screen]} showBack={screen !== "home"} />
+      {screen !== "splash" && <StatusBar />}
+      {showHeader && <AppHeader title={screenTitle[screen]} showBack={!["home"].includes(screen)} />}
       <AnimatePresence mode="wait">
         <motion.div key={screen} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden">
+          {screen === "splash" && <SplashScreen />}
+          {screen === "login" && <LoginScreen />}
           {screen === "home" && <HomeScreen />}
           {screen === "profile" && <ProfileScreen />}
           {screen === "cart" && <CartScreen />}
           {screen === "camera" && <CameraScreen />}
-          {(screen === "dashboard" || screen === "detail" || screen === "scanner") && <HomeScreen />}
+          {screen === "settings" && <SettingsScreen />}
+          {(screen === "dashboard" || screen === "detail") && <HomeScreen />}
         </motion.div>
       </AnimatePresence>
-      <BottomNav />
+      {showNav && <BottomNav />}
     </div>
   );
 };
