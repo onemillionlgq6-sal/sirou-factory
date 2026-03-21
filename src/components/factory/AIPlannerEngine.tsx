@@ -287,6 +287,9 @@ const AIPlannerEngine = ({ idea, onBlueprintReady, isPlanning, setIsPlanning }: 
       if (!allFeatures.some(f => f.name === pf.name)) allFeatures.push(pf);
     }
 
+    // Detect theme from description
+    const detectedTheme = detectThemeFromDescription(idea);
+
     const blueprint: AppBlueprint = {
       appName,
       description: idea,
@@ -296,6 +299,7 @@ const AIPlannerEngine = ({ idea, onBlueprintReady, isPlanning, setIsPlanning }: 
       plugins: ["Authentication", "File Storage", "Sovereign Vault"],
       hardwareNeeds: mergedHW,
       suggestions: base.suggestions || FALLBACK_PROFILE.suggestions,
+      theme: detectedTheme,
     };
 
     onBlueprintReady(blueprint);
