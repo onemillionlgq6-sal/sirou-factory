@@ -203,13 +203,17 @@ async function verifyWebIntegrity(timestamp: string): Promise<IntegrityResult> {
 /**
  * Reset the integrity baseline (use after a legitimate update)
  */
-export function resetIntegrityBaseline(): void {
-  localStorage.removeItem(INTEGRITY_STORE_KEY);
+export async function resetIntegrityBaseline(): Promise<void> {
+  try {
+    const db = await openIntegrityDB();
+    const tx = db.transaction(INTEGRITY_STORE_NAME, "readwrite");
+    tx.objectStore(INTEGRITY_STORE_NAME).delete("signatureHash");
+  } catch { /* fail silently */ }
 }
 
 /**
  * Get the stored baseline signature hash
  */
-export function getBaselineHash(): string | null {
-  return localStorage.getItem(INTEGRITY_STORE_KEY);
+export async function getBaselineHash(): Promise<string | null> {
+  return getStoredBaseline();
 }
