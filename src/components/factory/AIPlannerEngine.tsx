@@ -239,9 +239,11 @@ const AIPlannerEngine = ({ idea, onBlueprintReady, isPlanning, setIsPlanning }: 
     "🔍 Understanding your idea...",
     "📐 Designing screens & navigation...",
     "🗄️ Building data structure...",
-    "🔒 Adding privacy & security...",
-    "🎨 Applying premium design...",
+    "🔐 Injecting Sovereign Engine (AES-256, Code-Splitting)...",
+    "🛡️ Setting up Permission Shield (User/Admin roles)...",
+    "🎨 Applying your design style...",
     "📱 Connecting device features...",
+    "⚡ Optimizing for production...",
     "✅ Finalizing your app blueprint...",
   ], []);
 
