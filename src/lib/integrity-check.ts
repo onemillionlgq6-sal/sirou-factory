@@ -112,11 +112,11 @@ export async function verifyAppIntegrity(): Promise<IntegrityResult> {
     if (result.success && result.data) {
       const { signatureHash, packageName, installerSource } = result.data;
 
-      // Check against baseline
-      const baseline = localStorage.getItem(INTEGRITY_STORE_KEY);
+      // Check against baseline (IndexedDB)
+      const baseline = await getStoredBaseline();
       if (!baseline) {
         // First run — store baseline
-        localStorage.setItem(INTEGRITY_STORE_KEY, signatureHash);
+        await setStoredBaseline(signatureHash);
         return {
           verified: true,
           platform: "android",
