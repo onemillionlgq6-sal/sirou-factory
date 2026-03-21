@@ -49,8 +49,23 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
     } else if (updated.theme === "light") {
       document.documentElement.classList.remove("dark");
     }
-    toast.success(t("settings.saved"));
-  }, [t]);
+  }, []);
+
+  const handleThemeChange = useCallback((theme: FactoryPrefs["theme"]) => {
+    save({ ...prefs, theme });
+    toast.success(t("settings.theme") + ": " + (theme === "dark" ? t("settings.theme.dark") : t("settings.theme.light")));
+  }, [prefs, save, t]);
+
+  const handleAiChange = useCallback((aiProvider: FactoryPrefs["aiProvider"]) => {
+    save({ ...prefs, aiProvider });
+    const labels: Record<string, string> = { "built-in": t("settings.ai.builtin"), openai: "OpenAI", anthropic: "Anthropic" };
+    toast.success(t("settings.ai") + ": " + labels[aiProvider]);
+  }, [prefs, save, t]);
+
+  const handleStyleChange = useCallback((s: VisualStyle) => {
+    changeVisualStyle(s);
+    toast.success(t("style.title") + ": " + t(`style.${s}` as any));
+  }, [changeVisualStyle, t]);
 
   const themes: { value: FactoryPrefs["theme"]; icon: typeof Moon; label: string }[] = [
     { value: "dark", icon: Moon, label: t("settings.theme.dark") },
