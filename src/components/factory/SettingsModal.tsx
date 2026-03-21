@@ -149,7 +149,7 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
                   key={s}
                   variant={visualStyle === s ? "default" : "outline"}
                   size="sm"
-                  onClick={() => changeVisualStyle(s)}
+                  onClick={() => handleStyleChange(s)}
                   className={
                     visualStyle === s
                       ? "sf-gradient-bg text-primary-foreground"
