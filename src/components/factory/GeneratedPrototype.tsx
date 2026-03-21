@@ -6,6 +6,7 @@ import {
   ChevronRight, Menu, BarChart3, Camera, MapPin, QrCode, Mic,
   Plus, Trash2, Check, X, ArrowLeft, Send, Image, Package,
   LogIn, Mail, Lock, Eye, EyeOff, AlertCircle, Loader2,
+  Shield, Users, KeyRound, Activity, Ban, CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { AppBlueprint } from "./AIPlannerEngine";
@@ -15,14 +16,34 @@ interface GeneratedPrototypeProps {
   blueprint: AppBlueprint | null;
 }
 
-type Screen = "splash" | "login" | "home" | "dashboard" | "profile" | "cart" | "detail" | "camera" | "settings";
+type Screen = "splash" | "login" | "home" | "dashboard" | "profile" | "cart" | "detail" | "camera" | "settings" | "admin-users" | "admin-vault";
+
+// ═══ DEV MODE: Auto-login as Super Admin ═══
+const IS_DEV_MODE = true;
+
+interface MockUser {
+  id: number;
+  name: string;
+  email: string;
+  role: "admin" | "user";
+  status: "active" | "suspended";
+  lastLogin: string;
+}
+
+const MOCK_USERS: MockUser[] = [
+  { id: 1, name: "Root Admin (You)", email: "root@sirou.app", role: "admin", status: "active", lastLogin: "Just now" },
+  { id: 2, name: "Sarah Engineer", email: "sarah@company.com", role: "admin", status: "active", lastLogin: "2h ago" },
+  { id: 3, name: "Omar User", email: "omar@email.com", role: "user", status: "active", lastLogin: "1d ago" },
+  { id: 4, name: "Lina Tester", email: "lina@test.io", role: "user", status: "suspended", lastLogin: "5d ago" },
+  { id: 5, name: "Dev Bot", email: "bot@sirou.app", role: "user", status: "active", lastLogin: "3h ago" },
+];
 
 const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => {
-  // Dynamic theme from blueprint or default
   const theme = useMemo<AppTheme>(() => blueprint?.theme || THEMES.sovereign, [blueprint?.theme]);
   const grad = `linear-gradient(135deg, ${theme.primary}, ${theme.primaryEnd})`;
 
-  const [screen, setScreen] = useState<Screen>("splash");
+  // Dev mode: skip splash/login, start as Root Admin
+  const [screen, setScreen] = useState<Screen>(IS_DEV_MODE ? "home" : "splash");
   const [items, setItems] = useState([
     { id: 1, name: "Premium Feature", done: false },
     { id: 2, name: "Analytics Module", done: false },
@@ -34,19 +55,19 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
   const [notifCount, setNotifCount] = useState(3);
   const [isRecording, setIsRecording] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  // Login form state
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(IS_DEV_MODE ? "root@sirou.app" : "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [userRole, setUserRole] = useState<"user" | "admin">("user");
-  // Splash
-  const [splashDone, setSplashDone] = useState(false);
+  const [userRole, setUserRole] = useState<"user" | "admin">(IS_DEV_MODE ? "admin" : "user");
+  const [managedUsers, setManagedUsers] = useState(MOCK_USERS);
+  const [splashDone, setSplashDone] = useState(IS_DEV_MODE);
 
-  // Auto-advance splash screen
   useState(() => {
-    setTimeout(() => { setSplashDone(true); setScreen("login"); }, 2500);
+    if (!IS_DEV_MODE) {
+      setTimeout(() => { setSplashDone(true); setScreen("login"); }, 2500);
+    }
   });
 
   const navigateTo = useCallback((s: Screen) => setScreen(s), []);
@@ -137,12 +158,34 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
     } else { setIsRecording(false); toast("🎙️ Stopped"); }
   }, [isRecording]);
 
+  // ─── Admin: toggle user role ───
+  const toggleUserRole = useCallback((userId: number) => {
+    setManagedUsers(prev => prev.map(u =>
+      u.id === userId ? { ...u, role: u.role === "admin" ? "user" as const : "admin" as const } : u
+    ));
+    toast.success("Role updated");
+  }, []);
+
+  const toggleUserStatus = useCallback((userId: number) => {
+    setManagedUsers(prev => prev.map(u =>
+      u.id === userId ? { ...u, status: u.status === "active" ? "suspended" as const : "active" as const } : u
+    ));
+    toast.success("Status updated");
+  }, []);
+
   // ─── Status Bar ───
   const StatusBar = () => (
     <div className="flex items-center justify-between px-4 py-1.5 text-[10px] text-[hsl(210,10%,55%)]">
       <span>9:41</span>
-      <div className="w-4 h-2 rounded-sm border border-[hsl(210,10%,55%)]">
-        <div className="w-3 h-1.5 rounded-[1px] bg-[hsl(90,60%,50%)] m-[0.5px]" />
+      <div className="flex items-center gap-1">
+        {IS_DEV_MODE && userRole === "admin" && (
+          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-[hsl(55,90%,50%)]/20 text-[hsl(55,90%,55%)]">
+            🛡️ ROOT
+          </span>
+        )}
+        <div className="w-4 h-2 rounded-sm border border-[hsl(210,10%,55%)]">
+          <div className="w-3 h-1.5 rounded-[1px] bg-[hsl(90,60%,50%)] m-[0.5px]" />
+        </div>
       </div>
     </div>
   );
@@ -156,6 +199,11 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
       )}
       <h1 className="text-sm font-bold tracking-wide">{title}</h1>
       <div className="flex items-center gap-3">
+        {userRole === "admin" && (
+          <button onClick={() => navigateTo("admin-users")} className="relative">
+            <Shield className="h-4 w-4 text-[hsl(55,90%,55%)]" />
+          </button>
+        )}
         <button onClick={() => toast("Search: Coming soon")}><Search className="h-4 w-4 text-[hsl(210,10%,55%)]" /></button>
         <button onClick={clearNotifs} className="relative">
           <Bell className="h-4 w-4 text-[hsl(210,10%,55%)]" />
@@ -219,7 +267,6 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
         <p className="text-lg font-bold">Welcome Back</p>
         <p className="text-xs text-[hsl(210,10%,55%)] mt-1">Sign in to continue</p>
       </div>
-
       <div className="space-y-3">
         <div className="relative">
           <Mail className="absolute start-3 top-3 h-4 w-4 text-[hsl(210,10%,40%)]" />
@@ -237,26 +284,20 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
             {showPassword ? <EyeOff className="h-4 w-4 text-[hsl(210,10%,40%)]" /> : <Eye className="h-4 w-4 text-[hsl(210,10%,40%)]" />}
           </button>
         </div>
-
         {loginError && (
           <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-2 text-[hsl(0,72%,60%)] text-xs px-1">
-            <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-            <span>{loginError}</span>
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" /><span>{loginError}</span>
           </motion.div>
         )}
-
         <button onClick={handleLogin} disabled={isLoggingIn}
           className="w-full py-3 rounded-xl text-sm font-bold text-[hsl(220,25%,8%)] active:scale-[0.98] transition-transform disabled:opacity-60 flex items-center justify-center gap-2"
           style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>
           {isLoggingIn ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {isLoggingIn ? "Signing in..." : "Sign In"}
         </button>
-
         <button onClick={() => toast("Password reset: Feature coming soon")}
-          className="w-full text-center text-xs text-[hsl(55,90%,55%)] mt-2">
-          Forgot password?
-        </button>
+          className="w-full text-center text-xs text-[hsl(55,90%,55%)] mt-2">Forgot password?</button>
       </div>
     </div>
   );
@@ -264,6 +305,16 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
   // ─── Home Screen ───
   const HomeScreen = () => (
     <div className="flex-1 overflow-auto p-4 space-y-4">
+      {/* Admin banner */}
+      {userRole === "admin" && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 p-2.5 rounded-xl bg-[hsl(55,90%,50%)]/10 border border-[hsl(55,90%,50%)]/20">
+          <Shield className="h-4 w-4 text-[hsl(55,90%,55%)]" />
+          <span className="text-[10px] font-bold text-[hsl(55,90%,55%)]">SUPER ADMIN MODE</span>
+          <span className="text-[10px] text-[hsl(210,10%,55%)] ms-auto">root@sirou.app</span>
+        </motion.div>
+      )}
+
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
         className="rounded-xl p-4 relative overflow-hidden"
         style={{ background: "linear-gradient(135deg, hsl(55,90%,45%), hsl(90,60%,40%))" }}>
@@ -286,6 +337,28 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
           </button>
         ))}
       </div>
+
+      {/* Admin quick-access panel */}
+      {userRole === "admin" && (
+        <div className="grid grid-cols-2 gap-2">
+          <button onClick={() => navigateTo("admin-users")}
+            className="flex items-center gap-2 p-3 rounded-xl bg-[hsl(220,20%,12%)] border border-[hsl(55,90%,50%)]/20 active:scale-95 transition-transform">
+            <Users className="h-5 w-5 text-[hsl(55,90%,55%)]" />
+            <div className="text-start">
+              <p className="text-xs font-bold">User Manager</p>
+              <p className="text-[10px] text-[hsl(210,10%,55%)]">{managedUsers.length} accounts</p>
+            </div>
+          </button>
+          <button onClick={() => navigateTo("admin-vault")}
+            className="flex items-center gap-2 p-3 rounded-xl bg-[hsl(220,20%,12%)] border border-[hsl(55,90%,50%)]/20 active:scale-95 transition-transform">
+            <KeyRound className="h-5 w-5 text-[hsl(55,90%,55%)]" />
+            <div className="text-start">
+              <p className="text-xs font-bold">Vault & Keys</p>
+              <p className="text-[10px] text-[hsl(210,10%,55%)]">AES-256-GCM</p>
+            </div>
+          </button>
+        </div>
+      )}
 
       <div className="space-y-2">
         {items.map((item) => (
@@ -351,24 +424,144 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
     </div>
   );
 
-  const ProfileScreen = () => (
-    <div className="flex-1 overflow-auto p-4 space-y-4">
-      <div className="flex flex-col items-center py-6">
-        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-3"
-          style={{ background: grad }}>
-          <User className="h-10 w-10" style={{ color: theme.accentText }} />
-        </div>
-        <p className="font-bold text-lg">User Profile</p>
-        <p className="text-xs" style={{ color: theme.textMuted }}>{email || "user@sirou.app"}</p>
-        {/* Role badge */}
-        <span className={`mt-2 text-[10px] font-bold px-3 py-1 rounded-full ${
-          userRole === "admin" ? "bg-[hsl(55,90%,50%)]/20 text-[hsl(55,90%,55%)]" : "bg-[hsl(210,50%,50%)]/20 text-[hsl(210,60%,65%)]"
-        }`}>
-          {userRole === "admin" ? "🛡️ ADMIN" : "👤 USER"}
+  // ═══ ADMIN: User Management Screen ═══
+  const AdminUsersScreen = () => (
+    <div className="flex-1 overflow-auto p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-bold">User Accounts</p>
+        <span className="text-[10px] px-2 py-1 rounded-full bg-[hsl(55,90%,50%)]/15 text-[hsl(55,90%,55%)] font-bold">
+          {managedUsers.length} total
         </span>
       </div>
 
-      {/* Role switcher (demo) */}
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="p-2 rounded-lg bg-[hsl(220,20%,12%)] border border-[hsl(220,20%,18%)]">
+          <p className="text-lg font-bold text-[hsl(90,60%,50%)]">{managedUsers.filter(u => u.status === "active").length}</p>
+          <p className="text-[10px] text-[hsl(210,10%,55%)]">Active</p>
+        </div>
+        <div className="p-2 rounded-lg bg-[hsl(220,20%,12%)] border border-[hsl(220,20%,18%)]">
+          <p className="text-lg font-bold text-[hsl(55,90%,55%)]">{managedUsers.filter(u => u.role === "admin").length}</p>
+          <p className="text-[10px] text-[hsl(210,10%,55%)]">Admins</p>
+        </div>
+        <div className="p-2 rounded-lg bg-[hsl(220,20%,12%)] border border-[hsl(220,20%,18%)]">
+          <p className="text-lg font-bold text-[hsl(0,72%,60%)]">{managedUsers.filter(u => u.status === "suspended").length}</p>
+          <p className="text-[10px] text-[hsl(210,10%,55%)]">Suspended</p>
+        </div>
+      </div>
+
+      {managedUsers.map(u => (
+        <motion.div key={u.id} layout
+          className={`p-3 rounded-xl border ${u.status === "suspended" ? "bg-[hsl(0,20%,12%)] border-[hsl(0,30%,20%)] opacity-60" : "bg-[hsl(220,20%,12%)] border-[hsl(220,20%,18%)]"}`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                u.role === "admin" ? "bg-[hsl(55,90%,50%)]/20 text-[hsl(55,90%,55%)]" : "bg-[hsl(210,50%,50%)]/20 text-[hsl(210,60%,65%)]"
+              }`}>
+                {u.name.charAt(0)}
+              </div>
+              <div>
+                <p className="text-xs font-bold">{u.name}</p>
+                <p className="text-[10px] text-[hsl(210,10%,55%)]">{u.email}</p>
+              </div>
+            </div>
+            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+              u.role === "admin" ? "bg-[hsl(55,90%,50%)]/15 text-[hsl(55,90%,55%)]" : "bg-[hsl(210,50%,50%)]/15 text-[hsl(210,60%,65%)]"
+            }`}>
+              {u.role.toUpperCase()}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-[hsl(210,10%,45%)]">Last: {u.lastLogin}</span>
+            {u.id !== 1 && (
+              <div className="flex gap-1.5">
+                <button onClick={() => toggleUserRole(u.id)}
+                  className="text-[10px] px-2 py-1 rounded-lg bg-[hsl(220,20%,16%)] text-[hsl(55,90%,55%)] active:scale-95 transition-transform">
+                  {u.role === "admin" ? "Demote" : "Promote"}
+                </button>
+                <button onClick={() => toggleUserStatus(u.id)}
+                  className={`text-[10px] px-2 py-1 rounded-lg active:scale-95 transition-transform ${
+                    u.status === "active" ? "bg-[hsl(0,50%,15%)] text-[hsl(0,72%,60%)]" : "bg-[hsl(90,30%,15%)] text-[hsl(90,60%,50%)]"
+                  }`}>
+                  {u.status === "active" ? <Ban className="h-3 w-3 inline" /> : <CheckCircle2 className="h-3 w-3 inline" />}
+                </button>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+
+  // ═══ ADMIN: Vault & Encryption Dashboard ═══
+  const AdminVaultScreen = () => (
+    <div className="flex-1 overflow-auto p-4 space-y-3">
+      <p className="text-sm font-bold">Encrypted Vault</p>
+
+      <div className="p-4 rounded-xl bg-[hsl(220,20%,12%)] border border-[hsl(55,90%,50%)]/20">
+        <div className="flex items-center gap-2 mb-3">
+          <KeyRound className="h-5 w-5 text-[hsl(55,90%,55%)]" />
+          <span className="text-xs font-bold">Encryption Status</span>
+        </div>
+        {[
+          { label: "Algorithm", value: "AES-256-GCM", ok: true },
+          { label: "Key Derivation", value: "PBKDF2 · 100K iter", ok: true },
+          { label: "Vault State", value: "Initialized", ok: true },
+          { label: "Events Encrypted", value: "All payloads", ok: true },
+        ].map(({ label, value, ok }) => (
+          <div key={label} className="flex items-center justify-between py-1.5 border-b border-[hsl(220,20%,18%)] last:border-0">
+            <span className="text-[11px] text-[hsl(210,10%,55%)]">{label}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-mono font-bold">{value}</span>
+              {ok && <CheckCircle2 className="h-3 w-3 text-[hsl(90,60%,50%)]" />}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="p-4 rounded-xl bg-[hsl(220,20%,12%)] border border-[hsl(220,20%,18%)]">
+        <div className="flex items-center gap-2 mb-3">
+          <Activity className="h-5 w-5 text-[hsl(210,60%,65%)]" />
+          <span className="text-xs font-bold">Hardware Bridge</span>
+        </div>
+        {[
+          { label: "Camera API", status: "Ready" },
+          { label: "GPS / Location", status: "Ready" },
+          { label: "QR Scanner", status: "Ready" },
+          { label: "Microphone", status: "Ready" },
+          { label: "Biometric Auth", status: "Standby" },
+        ].map(({ label, status }) => (
+          <div key={label} className="flex items-center justify-between py-1.5 border-b border-[hsl(220,20%,18%)] last:border-0">
+            <span className="text-[11px] text-[hsl(210,10%,55%)]">{label}</span>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              status === "Ready" ? "bg-[hsl(90,60%,50%)]/15 text-[hsl(90,60%,50%)]" : "bg-[hsl(55,90%,50%)]/15 text-[hsl(55,90%,55%)]"
+            }`}>{status}</span>
+          </div>
+        ))}
+      </div>
+
+      <button onClick={() => { toast.success("🔐 Vault test: Encrypt → Decrypt cycle passed"); }}
+        className="w-full py-3 rounded-xl text-sm font-bold text-[hsl(220,25%,8%)] active:scale-[0.98] transition-transform"
+        style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>
+        Test Vault Encryption
+      </button>
+    </div>
+  );
+
+  const ProfileScreen = () => (
+    <div className="flex-1 overflow-auto p-4 space-y-4">
+      <div className="flex flex-col items-center py-6">
+        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-3" style={{ background: grad }}>
+          <User className="h-10 w-10" style={{ color: theme.accentText }} />
+        </div>
+        <p className="font-bold text-lg">{userRole === "admin" ? "Root Admin" : "User Profile"}</p>
+        <p className="text-xs" style={{ color: theme.textMuted }}>{email || "user@sirou.app"}</p>
+        <span className={`mt-2 text-[10px] font-bold px-3 py-1 rounded-full ${
+          userRole === "admin" ? "bg-[hsl(55,90%,50%)]/20 text-[hsl(55,90%,55%)]" : "bg-[hsl(210,50%,50%)]/20 text-[hsl(210,60%,65%)]"
+        }`}>
+          {userRole === "admin" ? "🛡️ SUPER ADMIN" : "👤 USER"}
+        </span>
+      </div>
+
       <div className="flex gap-2">
         <button onClick={() => { setUserRole("user"); toast("Switched to User role"); }}
           className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${userRole === "user" ? "text-white" : "border border-[hsl(220,20%,18%)]"}`}
@@ -391,15 +584,19 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
         </button>
       ))}
 
-      {/* Admin-only section */}
       {userRole === "admin" ? (
         <div className="space-y-2">
           <p className="text-xs font-bold" style={{ color: theme.accent }}>🔐 Admin Panel</p>
-          {["User Management", "System Settings", "Sovereign Core", "Audit Logs"].map(item => (
-            <button key={item} onClick={() => toast(`${item}: Admin access granted`)}
+          {[
+            { label: "User Management", screen: "admin-users" as Screen },
+            { label: "Vault & Encryption", screen: "admin-vault" as Screen },
+            { label: "Sovereign Core", screen: "dashboard" as Screen },
+            { label: "Audit Logs", screen: "dashboard" as Screen },
+          ].map(item => (
+            <button key={item.label} onClick={() => { navigateTo(item.screen); toast(`${item.label}: Access granted`); }}
               className="w-full flex items-center justify-between p-3 rounded-lg active:scale-[0.98] transition-transform"
               style={{ background: theme.surface, borderColor: theme.accent + "33", borderWidth: 1, borderStyle: "solid" }}>
-              <span className="text-sm font-medium">{item}</span>
+              <span className="text-sm font-medium">{item.label}</span>
               <ChevronRight className="h-4 w-4" style={{ color: theme.accent }} />
             </button>
           ))}
@@ -429,9 +626,7 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
           <p className="text-sm text-[hsl(210,10%,55%)]">Cart is empty</p>
           <button onClick={() => navigateTo("home")}
             className="mt-4 px-6 py-2 rounded-xl text-sm font-bold text-[hsl(220,25%,8%)]"
-            style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>
-            Browse Items
-          </button>
+            style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>Browse Items</button>
         </div>
       ) : (
         <>
@@ -441,9 +636,7 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
           </div>
           <button onClick={() => { setCartCount(0); toast.success("Order placed! 🎉"); }}
             className="w-full py-3 rounded-xl text-sm font-bold text-[hsl(220,25%,8%)] active:scale-[0.98] transition-transform"
-            style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>
-            Checkout
-          </button>
+            style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>Checkout</button>
         </>
       )}
     </div>
@@ -494,6 +687,8 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
     detail: "Details",
     camera: "Camera",
     settings: "Settings",
+    "admin-users": "👥 User Manager",
+    "admin-vault": "🔐 Vault",
   };
 
   const showNav = !["splash", "login"].includes(screen);
@@ -513,6 +708,8 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
           {screen === "cart" && <CartScreen />}
           {screen === "camera" && <CameraScreen />}
           {screen === "settings" && <SettingsScreen />}
+          {screen === "admin-users" && <AdminUsersScreen />}
+          {screen === "admin-vault" && <AdminVaultScreen />}
           {(screen === "dashboard" || screen === "detail") && <HomeScreen />}
         </motion.div>
       </AnimatePresence>
