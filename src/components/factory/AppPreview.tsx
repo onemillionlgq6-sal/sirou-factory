@@ -2,8 +2,6 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Eye, Smartphone, Monitor, Tablet, Code2,
-  Home, Settings, User, Bell, Search, ShoppingCart,
-  Heart, Star, ChevronRight, Menu, BarChart3,
 } from "lucide-react";
 import {
   Tooltip,
@@ -11,10 +9,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useI18n } from "@/lib/i18n";
+import GeneratedPrototype from "./GeneratedPrototype";
+import type { AppBlueprint } from "./AIPlannerEngine";
 
 interface AppPreviewProps {
   isGenerated: boolean;
   appName: string;
+  blueprint?: AppBlueprint | null;
 }
 
 type ViewMode = "desktop" | "tablet" | "mobile";
@@ -25,102 +26,7 @@ const viewWidths: Record<ViewMode, string> = {
   mobile: "w-[375px] max-w-full",
 };
 
-/** Renders a realistic generated app UI inside the emulator frame */
-const GeneratedAppUI = ({ appName }: { appName: string }) => (
-  <div className="h-[500px] flex flex-col bg-[hsl(220,25%,8%)] text-[hsl(210,15%,92%)] overflow-hidden">
-    {/* Status bar */}
-    <div className="flex items-center justify-between px-4 py-1.5 text-[10px] text-[hsl(210,10%,55%)]">
-      <span>9:41</span>
-      <div className="flex items-center gap-1.5">
-        <div className="w-4 h-2 rounded-sm border border-[hsl(210,10%,55%)]">
-          <div className="w-3 h-1.5 rounded-[1px] bg-[hsl(90,60%,50%)] m-[0.5px]" />
-        </div>
-      </div>
-    </div>
-
-    {/* App header */}
-    <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(220,20%,16%)]">
-      <Menu className="h-5 w-5 text-[hsl(210,10%,55%)]" />
-      <h1 className="text-sm font-bold tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }}>
-        {appName}
-      </h1>
-      <div className="flex items-center gap-3">
-        <Search className="h-4 w-4 text-[hsl(210,10%,55%)]" />
-        <div className="relative">
-          <Bell className="h-4 w-4 text-[hsl(210,10%,55%)]" />
-          <div className="absolute -top-1 -end-1 w-2 h-2 rounded-full bg-[hsl(0,72%,55%)]" />
-        </div>
-      </div>
-    </div>
-
-    {/* Content */}
-    <div className="flex-1 overflow-auto p-4 space-y-4">
-      {/* Hero card */}
-      <div className="rounded-xl p-4 relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, hsl(55,90%,45%), hsl(90,60%,40%))" }}>
-        <p className="text-xs font-semibold text-[hsl(220,25%,8%)] opacity-70">WELCOME BACK</p>
-        <p className="text-lg font-bold text-[hsl(220,25%,8%)] mt-1">Dashboard</p>
-        <p className="text-xs text-[hsl(220,25%,8%)] opacity-60 mt-1">3 new notifications</p>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { icon: BarChart3, label: "Sales", val: "1.2K" },
-          { icon: User, label: "Users", val: "847" },
-          { icon: Star, label: "Rating", val: "4.9" },
-        ].map(({ icon: Icon, label, val }) => (
-          <div key={label} className="rounded-lg p-3 bg-[hsl(220,20%,12%)] border border-[hsl(220,20%,18%)] text-center">
-            <Icon className="h-4 w-4 mx-auto text-[hsl(55,90%,55%)] mb-1" />
-            <p className="text-xs text-[hsl(210,10%,55%)]">{label}</p>
-            <p className="text-sm font-bold">{val}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* List items */}
-      <div className="space-y-2">
-        {["Premium Feature", "Analytics Module", "User Settings"].map((item) => (
-          <div key={item} className="flex items-center justify-between p-3 rounded-lg bg-[hsl(220,20%,12%)] border border-[hsl(220,20%,18%)]">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>
-                <Settings className="h-4 w-4 text-[hsl(220,25%,8%)]" />
-              </div>
-              <span className="text-sm font-medium">{item}</span>
-            </div>
-            <ChevronRight className="h-4 w-4 text-[hsl(210,10%,55%)]" />
-          </div>
-        ))}
-      </div>
-
-      {/* CTA button */}
-      <button className="w-full py-3 rounded-xl text-sm font-bold text-[hsl(220,25%,8%)]"
-        style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>
-        Get Started
-      </button>
-    </div>
-
-    {/* Bottom nav */}
-    <div className="flex items-center justify-around py-2.5 border-t border-[hsl(220,20%,16%)] bg-[hsl(220,20%,10%)]">
-      {[
-        { icon: Home, label: "Home", active: true },
-        { icon: Heart, label: "Saved", active: false },
-        { icon: ShoppingCart, label: "Cart", active: false },
-        { icon: User, label: "Profile", active: false },
-      ].map(({ icon: Icon, label, active }) => (
-        <div key={label} className="flex flex-col items-center gap-0.5">
-          <Icon className={`h-5 w-5 ${active ? "text-[hsl(55,90%,55%)]" : "text-[hsl(210,10%,40%)]"}`} />
-          <span className={`text-[10px] ${active ? "text-[hsl(55,90%,55%)] font-medium" : "text-[hsl(210,10%,40%)]"}`}>
-            {label}
-          </span>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const AppPreview = ({ isGenerated, appName }: AppPreviewProps) => {
+const AppPreview = ({ isGenerated, appName, blueprint }: AppPreviewProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>("mobile");
   const [showCode, setShowCode] = useState(false);
   const { t } = useI18n();
@@ -189,7 +95,6 @@ const AppPreview = ({ isGenerated, appName }: AppPreviewProps) => {
 
       {/* Emulator frame */}
       <div className={`mx-auto transition-all duration-300 ${viewWidths[viewMode]}`}>
-        {/* Device bezel */}
         <div className="rounded-[2rem] border-2 border-[hsl(220,20%,22%)] bg-[hsl(220,25%,6%)] p-1.5 shadow-2xl">
           {/* Notch */}
           <div className="flex justify-center mb-[-6px] relative z-10">
@@ -207,30 +112,46 @@ const AppPreview = ({ isGenerated, appName }: AppPreviewProps) => {
             ) : showCode ? (
               <div className="h-[500px] overflow-auto p-4 bg-[hsl(220,25%,6%)] text-[hsl(90,60%,50%)] font-mono text-xs leading-relaxed">
                 <pre className="whitespace-pre-wrap">{`// ${appName} — Generated by Sirou Factory
-// Sovereign Dark/Gold Theme Applied
+// Functional Prototype — All buttons are interactive
 
-import React from 'react';
-import { Home, User, Settings } from 'lucide-react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
+import { Camera, MapPin, QrCode } from 'lucide-react';
+import { capturePhoto, scanQR } from '@/lib/hardware';
 
 const App: React.FC = () => {
+  const [items, setItems] = useState([]);
+  const [cart, setCart] = useState(0);
+
+  const handleCamera = async () => {
+    const result = await capturePhoto();
+    if (result.success) toast.success('Photo captured!');
+  };
+
+  const handleGPS = () => {
+    navigator.geolocation.getCurrentPosition(
+      pos => toast.success(\`📍 \${pos.coords.latitude}\`),
+      () => toast.error('GPS denied')
+    );
+  };
+
   return (
     <div className="min-h-screen bg-sovereign-dark">
       <header className="sovereign-gradient p-4">
-        <h1 className="text-xl font-bold">
-          ${appName}
-        </h1>
+        <h1>${appName}</h1>
       </header>
+      {/* Interactive list with state */}
+      {/* Hardware buttons: Camera, GPS, QR */}
+      {/* Cart with counter */}
       <nav className="bottom-nav">
-        <Home /> <User /> <Settings />
+        <Home /> <Heart /> <Cart badge={cart} />
       </nav>
     </div>
   );
-};
-
-export default App;`}</pre>
+};`}</pre>
               </div>
             ) : (
-              <GeneratedAppUI appName={appName} />
+              <GeneratedPrototype appName={appName} blueprint={blueprint ?? null} />
             )}
           </div>
 
