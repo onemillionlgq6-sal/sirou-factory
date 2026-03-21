@@ -43,7 +43,7 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
   const grad = `linear-gradient(135deg, ${theme.primary}, ${theme.primaryEnd})`;
 
   // Dev mode: skip splash/login, start as Root Admin
-  const [screen, setScreen] = useState<Screen>(IS_DEV_MODE ? "home" : "splash");
+  const [screen, setScreen] = useState<Screen>(IS_DEV_MODE ? "admin-users" : "splash");
   const [items, setItems] = useState([
     { id: 1, name: "Premium Feature", done: false },
     { id: 2, name: "Analytics Module", done: false },
