@@ -252,8 +252,11 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Sovereign Core Launcher */}
-          <div className="pb-12">
+          {/* Launchers */}
+          <div className="pb-12 space-y-4">
+            <ErrorBoundary moduleName="TemplatesLauncher" fallbackTitleAr="خطأ في قوالب التطبيقات">
+              <TemplatesLauncher />
+            </ErrorBoundary>
             <ErrorBoundary moduleName="SovereignCoreLauncher" fallbackTitleAr="خطأ في مركز القدرات">
               <SovereignCoreLauncher />
             </ErrorBoundary>
