@@ -26,7 +26,7 @@ const FactoryHeader = ({ isBackendConnected = false }: FactoryHeaderProps) => {
       <div className="flex items-center gap-3" dir="ltr">
         <SovereignIcon size="md" glowing />
         <div>
-          <h1 className="text-xl font-display font-bold text-foreground tracking-wide">
+          <h1 className="text-2xl font-display font-bold text-foreground tracking-wide italic" style={{ fontFamily: "'Georgia', 'Times New Roman', serif", letterSpacing: '0.05em' }}>
             Sirou Factory
           </h1>
           <p className="text-[11px] text-muted-foreground tracking-wider uppercase font-medium">
