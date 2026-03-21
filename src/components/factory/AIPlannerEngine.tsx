@@ -239,9 +239,11 @@ const AIPlannerEngine = ({ idea, onBlueprintReady, isPlanning, setIsPlanning }: 
     "🔍 Understanding your idea...",
     "📐 Designing screens & navigation...",
     "🗄️ Building data structure...",
-    "🔒 Adding privacy & security...",
-    "🎨 Applying premium design...",
+    "🔐 Injecting Sovereign Engine (AES-256, Code-Splitting)...",
+    "🛡️ Setting up Permission Shield (User/Admin roles)...",
+    "🎨 Applying your design style...",
     "📱 Connecting device features...",
+    "⚡ Optimizing for production...",
     "✅ Finalizing your app blueprint...",
   ], []);
 
@@ -276,12 +278,19 @@ const AIPlannerEngine = ({ idea, onBlueprintReady, isPlanning, setIsPlanning }: 
       if (!allFeatures.some(f => f.name === hf.name)) allFeatures.push(hf);
     }
 
-    // Production-ready features always included
+    // Production-ready + Sovereign features always included
     const proFeatures: BlueprintFeature[] = [
       { name: "Splash Screen & App Icon", category: "core", approved: true, risk: "safe" },
       { name: "Form Validation", category: "core", approved: true, risk: "safe" },
       { name: "Error Handling", category: "core", approved: true, risk: "safe" },
       { name: "Smooth Animations", category: "core", approved: true, risk: "safe" },
+      // Sovereign Logic Injection
+      { name: "AES-256 Data Encryption", category: "core", approved: true, risk: "safe" },
+      { name: "Code-Splitting & Lazy Loading", category: "core", approved: true, risk: "safe" },
+      { name: "Native Hardware Bridge", category: "core", approved: true, risk: "safe" },
+      // Permission Shield
+      { name: "User/Admin Permission System", category: "core", approved: true, risk: "safe" },
+      { name: "Role-Based Access Control", category: "core", approved: true, risk: "safe" },
     ];
     for (const pf of proFeatures) {
       if (!allFeatures.some(f => f.name === pf.name)) allFeatures.push(pf);

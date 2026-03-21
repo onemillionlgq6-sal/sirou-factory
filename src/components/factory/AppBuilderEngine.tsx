@@ -25,13 +25,15 @@ const AppBuilderEngine = ({ blueprint, onComplete }: AppBuilderEngineProps) => {
     "📐 Creating app structure...",
     "🗄️ Setting up data storage...",
     ...approvedFeatures.map((f) => `⚙️ Building: ${f.name}`),
-    "🎨 Applying Sovereign Dark/Gold theme...",
-    "📱 Connecting device features...",
-    "✨ Adding animations & transitions...",
-    "🔒 Securing with Privacy Vault...",
+    "🎨 Applying user-defined design theme...",
+    "📱 Connecting native hardware bridge...",
+    "✨ Adding Framer Motion transitions...",
+    "🔐 Injecting AES-256 encryption layer...",
+    "🛡️ Configuring User/Admin permission shield...",
+    "⚡ Applying code-splitting & lazy loading...",
     "📋 Adding form validation & error handling...",
     "🖼️ Generating splash screen & icons...",
-    "✅ Running quality checks...",
+    "🔍 Running pre-export system audit...",
   ], [approvedFeatures]);
 
   useEffect(() => {

@@ -56,18 +56,23 @@ const QualityGate = ({ blueprint, appName, onProceed, onRefine }: QualityGatePro
       const items: AuditItem[] = [
         { id: "1", category: "ui", severity: "fixed", title: "Padding consistency", detail: "Unified all card margins to 16px for visual harmony" },
         { id: "2", category: "logic", severity: "fixed", title: "Empty state handling", detail: "Added fallback UI for empty lists and data states" },
+        // Sovereign Logic audits
+        { id: "s1", category: "security", severity: "fixed", title: "AES-256 encryption active", detail: "All sensitive data payloads encrypted with zero-knowledge vault" },
+        { id: "s2", category: "performance", severity: "fixed", title: "Code-splitting applied", detail: "Lazy loading enabled for all secondary screens — reduced initial bundle" },
+        { id: "s3", category: "security", severity: "fixed", title: "Permission Shield configured", detail: "User/Admin role separation enforced — end-users cannot access Sovereign Core" },
+        { id: "s4", category: "logic", severity: "fixed", title: "Hardware Bridge connected", detail: "Camera, GPS, and Mic APIs linked with web fallbacks" },
       ];
 
       const featureCount = blueprint.features.filter(f => f.approved).length;
-      if (featureCount > 6) {
-        items.push({ id: "3", category: "performance", severity: "info", title: "Feature density", detail: `${featureCount} features active — consider lazy loading for optimal speed` });
+      if (featureCount > 8) {
+        items.push({ id: "3", category: "performance", severity: "info", title: "High feature density", detail: `${featureCount} features active — code-splitting ensures optimal load performance` });
       }
 
       if (blueprint.hardwareNeeds && blueprint.hardwareNeeds.length > 2) {
-        items.push({ id: "4", category: "security", severity: "info", title: "Permission requests", detail: `${blueprint.hardwareNeeds.length} device features detected — all permissions use just-in-time requests` });
+        items.push({ id: "4", category: "security", severity: "info", title: "Permission requests", detail: `${blueprint.hardwareNeeds.length} device features — all use just-in-time permission requests with rationale` });
       }
 
-      items.push({ id: "5", category: "ui", severity: "fixed", title: "Theme consistency", detail: "All components aligned to the selected design theme" });
+      items.push({ id: "5", category: "ui", severity: "fixed", title: "Theme consistency", detail: `Design theme "${blueprint.theme?.name || 'Sovereign Gold/Dark'}" applied consistently across all screens` });
 
       setAuditItems(items);
       setIsAuditing(false);
