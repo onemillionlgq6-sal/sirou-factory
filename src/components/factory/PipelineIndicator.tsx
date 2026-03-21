@@ -2,7 +2,7 @@ import { memo } from "react";
 
 type Phase = "idea" | "planning" | "blueprint" | "building" | "audit" | "complete";
 
-const PHASES: Phase[] = ["idea", "planning", "blueprint", "building", "complete"];
+const PHASES: Phase[] = ["idea", "planning", "blueprint", "building", "audit", "complete"];
 
 interface PipelineIndicatorProps {
   currentPhase: Phase;
