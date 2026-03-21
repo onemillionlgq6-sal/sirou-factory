@@ -121,28 +121,45 @@ const Index = () => {
   return (
     <div className="h-screen flex bg-cover bg-center bg-fixed overflow-hidden" style={{ backgroundImage: `url(${factoryBg})` }}>
       <div className="h-screen flex w-full bg-black/30 backdrop-blur-[2px]">
-        {/* ─── LEFT SIDEBAR: AI Chat (fixed, 25%) ─── */}
-        <aside className="w-1/4 min-w-[280px] max-w-[360px] h-screen flex flex-col border-e border-border/30 bg-background/80 backdrop-blur-md z-20">
-          {/* App AI Chat */}
-          <div className="flex-1 overflow-y-auto">
-            <ErrorBoundary moduleName="AIChatApp" fallbackTitleAr="خطأ في محادثة التطبيق">
-              <AIChatPanel
-                mode="app"
-                onSendMessage={(msg) => handleAppAIMessage(msg)}
-                isGenerating={isPlanning}
-              />
-            </ErrorBoundary>
-          </div>
+        {/* ─── LEFT SIDEBAR: AI Chat (collapsible) ─── */}
+        <aside
+          className={`h-screen flex flex-col border-e border-border/30 bg-background/80 backdrop-blur-md z-20 transition-all duration-300 ${
+            sidebarOpen ? "w-1/4 min-w-[280px] max-w-[360px]" : "w-12"
+          }`}
+        >
+          {/* Toggle button */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="flex items-center justify-center h-10 shrink-0 border-b border-border/30 text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors"
+            title={sidebarOpen ? "طي الشريط" : "فتح الشريط"}
+          >
+            {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+          </button>
 
-          {/* Factory AI Chat */}
-          <div className="border-t border-border/30">
-            <ErrorBoundary moduleName="AIChatFactory" fallbackTitleAr="خطأ في محادثة المصنع">
-              <AIChatPanel
-                mode="factory"
-                onSendMessage={(msg) => handleFactoryAIMessage(msg)}
-              />
-            </ErrorBoundary>
-          </div>
+          {sidebarOpen && (
+            <>
+              {/* App AI Chat */}
+              <div className="flex-1 overflow-y-auto">
+                <ErrorBoundary moduleName="AIChatApp" fallbackTitleAr="خطأ في محادثة التطبيق">
+                  <AIChatPanel
+                    mode="app"
+                    onSendMessage={(msg) => handleAppAIMessage(msg)}
+                    isGenerating={isPlanning}
+                  />
+                </ErrorBoundary>
+              </div>
+
+              {/* Factory AI Chat */}
+              <div className="border-t border-border/30">
+                <ErrorBoundary moduleName="AIChatFactory" fallbackTitleAr="خطأ في محادثة المصنع">
+                  <AIChatPanel
+                    mode="factory"
+                    onSendMessage={(msg) => handleFactoryAIMessage(msg)}
+                  />
+                </ErrorBoundary>
+              </div>
+            </>
+          )}
         </aside>
 
         {/* ─── RIGHT PANEL: Preview & Tools (75%) ─── */}
