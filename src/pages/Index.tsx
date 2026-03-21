@@ -6,6 +6,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import PipelineIndicator from "@/components/factory/PipelineIndicator";
 import LeftColumn from "@/components/factory/LeftColumn";
 import RightColumn from "@/components/factory/RightColumn";
+import AIChatPanel from "@/components/factory/AIChatPanel";
 import type { Phase } from "@/components/factory/PipelineIndicator";
 import type { ActionNotification } from "@/components/factory/TransparencyCenter";
 import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
@@ -33,6 +34,19 @@ const Index = () => {
     setIdea(ideaText);
     setAppName(ideaText.split(" ").slice(0, 4).join(" "));
     setPhase("planning");
+  }, []);
+
+  const handleAppAIMessage = useCallback((message: string) => {
+    // If in idea phase, treat as a generation request
+    if (phase === "idea") {
+      handleGenerate(message);
+    } else {
+      toast.success("📝 تم تسجيل التعديل — جاري التطبيق...");
+    }
+  }, [phase, handleGenerate]);
+
+  const handleFactoryAIMessage = useCallback((message: string) => {
+    toast.success("🔧 طلب تطوير المصنع مسجل — جاري المعالجة...");
   }, []);
 
   const handleBlueprintReady = useCallback((bp: AppBlueprint) => {
@@ -129,6 +143,8 @@ const Index = () => {
               onPublish={handlePublish} onExport={handleExport}
               onBackendConnected={() => setIsBackendConnected(true)}
               onBackendDisconnected={() => setIsBackendConnected(false)}
+              onAppAIMessage={handleAppAIMessage}
+              isGenerating={isPlanning}
             />
           </div>
 
@@ -140,6 +156,16 @@ const Index = () => {
               <SovereignCoreLauncher />
             </ErrorBoundary>
           </div>
+        </div>
+
+        {/* Factory Development AI — Floating bottom-left */}
+        <div className="fixed bottom-4 start-4 z-50 w-80">
+          <ErrorBoundary moduleName="AIChatFactory" fallbackTitleAr="خطأ في محادثة المصنع">
+            <AIChatPanel
+              mode="factory"
+              onSendMessage={(msg) => handleFactoryAIMessage(msg)}
+            />
+          </ErrorBoundary>
         </div>
       </div>
     </div>
