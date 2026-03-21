@@ -6,7 +6,6 @@ import HealthDashboard from "@/components/factory/HealthDashboard";
 import BuildGuardPanel from "@/components/factory/BuildGuardPanel";
 import CompliancePanel from "@/components/factory/CompliancePanel";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import ErrorBoundary from "@/components/ErrorBoundary";
 import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
 
 interface RightColumnProps {
