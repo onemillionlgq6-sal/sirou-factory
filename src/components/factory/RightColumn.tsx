@@ -5,7 +5,6 @@ import FactoryActions from "@/components/factory/FactoryActions";
 import HealthDashboard from "@/components/factory/HealthDashboard";
 import BuildGuardPanel from "@/components/factory/BuildGuardPanel";
 import CompliancePanel from "@/components/factory/CompliancePanel";
-import AIChatPanel from "@/components/factory/AIChatPanel";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
 
@@ -28,15 +27,6 @@ const RightColumn = memo(({
   onAppAIMessage, isGenerating,
 }: RightColumnProps) => (
   <div className="space-y-6">
-    {/* App Generation AI — Always visible */}
-    <ErrorBoundary moduleName="AIChatApp" fallbackTitleAr="خطأ في محادثة التطبيق">
-      <AIChatPanel
-        mode="app"
-        onSendMessage={(msg) => onAppAIMessage?.(msg)}
-        isGenerating={isGenerating}
-      />
-    </ErrorBoundary>
-
     <ErrorBoundary moduleName="AppPreview" fallbackTitleAr="خطأ في المعاينة">
       <AppPreview isGenerated={isComplete} appName={appName} blueprint={blueprint} />
     </ErrorBoundary>
