@@ -12,6 +12,7 @@ import InteractiveBlueprint from "@/components/factory/InteractiveBlueprint";
 import AppBuilderEngine from "@/components/factory/AppBuilderEngine";
 import HealthDashboard from "@/components/factory/HealthDashboard";
 import SovereignCoreLauncher from "@/components/factory/SovereignCoreLauncher";
+import TemplatesLauncher from "@/components/factory/TemplatesLauncher";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import BuildGuardPanel from "@/components/factory/BuildGuardPanel";
 import CompliancePanel from "@/components/factory/CompliancePanel";
