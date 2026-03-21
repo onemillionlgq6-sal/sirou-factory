@@ -34,18 +34,38 @@ function saveOTAConfig(config: OTAConfig): void {
   localStorage.setItem(OTA_STORAGE_KEY, JSON.stringify(config));
 }
 
-/** Generate SHA-256 signature for update payload */
+/** Generate HMAC-SHA256 signature for update payload */
 async function signPayload(payload: Record<string, unknown>, ownerKey: string): Promise<string> {
-  const data = JSON.stringify(payload) + ownerKey;
   const encoder = new TextEncoder();
-  const hash = await crypto.subtle.digest("SHA-256", encoder.encode(data));
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
+  const keyData = encoder.encode(ownerKey);
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const data = encoder.encode(JSON.stringify(payload));
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, data);
+  return Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** Verify update signature against owner key */
+/** Verify update HMAC signature against owner key */
 async function verifySignature(update: OTAUpdate, ownerKey: string): Promise<boolean> {
-  const expected = await signPayload(update.payload as Record<string, unknown>, ownerKey);
-  return expected === update.signature;
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(ownerKey);
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["verify"]
+  );
+  const data = encoder.encode(JSON.stringify(update.payload));
+  const expectedSig = Uint8Array.from(
+    (update.signature.match(/.{2}/g) || []).map(b => parseInt(b, 16))
+  );
+  return crypto.subtle.verify("HMAC", cryptoKey, expectedSig, data);
 }
 
 /** Apply a verified OTA update */

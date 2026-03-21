@@ -170,13 +170,20 @@ function createWorkerSandbox(manifest: PluginManifest): Worker {
  * Iframe runs in a null origin with no access to parent window.
  */
 function createIframeSandbox(manifest: PluginManifest): HTMLIFrameElement {
+  const safeId = sanitizeId(manifest.id);
+
+  // Validate entrypoint
+  const forbidden = /\b(eval|Function)\s*\(/;
+  if (forbidden.test(manifest.entrypoint)) {
+    throw new Error(`[Sandbox] Plugin "${safeId}" contains forbidden code constructs`);
+  }
+
   const iframe = document.createElement("iframe");
-  // Strict sandbox: no scripts by default, no forms, no popups, no same-origin
   iframe.sandbox.add("allow-scripts");
-  // No allow-same-origin — iframe gets null origin, zero parent access
   iframe.style.display = "none";
   iframe.style.border = "none";
 
+  // Iframe loads a safe loader that receives plugin code via postMessage
   const html = `
     <!DOCTYPE html>
     <html>
@@ -184,17 +191,29 @@ function createIframeSandbox(manifest: PluginManifest): HTMLIFrameElement {
     <body>
     <script>
       "use strict";
-      const PluginAPI = {
-        request(action, payload) {
-          const requestId = crypto.randomUUID();
-          parent.postMessage({ type: "request", action, payload, requestId, pluginId: "${manifest.id}" }, "*");
+      var PLUGIN_ID = "${safeId}";
+      // Block dangerous globals
+      Object.defineProperty(window, 'eval', { value: undefined, writable: false });
+      Object.defineProperty(window, 'Function', { value: undefined, writable: false });
+
+      var PluginAPI = {
+        request: function(action, payload) {
+          var requestId = crypto.randomUUID();
+          parent.postMessage({ type: "request", action: action, payload: payload, requestId: requestId, pluginId: PLUGIN_ID }, "*");
           return requestId;
         }
       };
-      try { ${manifest.entrypoint} }
-      catch(err) {
-        parent.postMessage({ type: "event", action: "error", payload: { message: err.message }, requestId: "", pluginId: "${manifest.id}" }, "*");
-      }
+      window.addEventListener("message", function(e) {
+        if (e.data && e.data.type === "__LOAD_PLUGIN__") {
+          try {
+            var fn = new (function(){}).constructor("PluginAPI", e.data.code);
+            fn(PluginAPI);
+          } catch(err) {
+            parent.postMessage({ type: "event", action: "error", payload: { message: String(err) }, requestId: "", pluginId: PLUGIN_ID }, "*");
+          }
+        }
+      });
+      parent.postMessage({ type: "event", action: "ready", payload: {}, requestId: "", pluginId: PLUGIN_ID }, "*");
     </script>
     </body>
     </html>
@@ -202,6 +221,11 @@ function createIframeSandbox(manifest: PluginManifest): HTMLIFrameElement {
 
   iframe.srcdoc = html;
   document.body.appendChild(iframe);
+
+  // Send plugin code via postMessage after iframe loads
+  iframe.addEventListener("load", () => {
+    iframe.contentWindow?.postMessage({ type: "__LOAD_PLUGIN__", code: manifest.entrypoint }, "*");
+  });
 
   return iframe;
 }

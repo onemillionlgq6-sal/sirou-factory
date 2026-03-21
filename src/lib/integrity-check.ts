@@ -17,7 +17,41 @@ export interface IntegrityResult {
 }
 
 // Expected signature SHA-256 hash (set during first verified run)
-const INTEGRITY_STORE_KEY = "sirou_integrity_baseline";
+// Stored in IndexedDB instead of localStorage for tamper resistance
+const INTEGRITY_DB_NAME = "sirou_integrity";
+const INTEGRITY_STORE_NAME = "baseline";
+
+async function openIntegrityDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(INTEGRITY_DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      req.result.createObjectStore(INTEGRITY_STORE_NAME);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getStoredBaseline(): Promise<string | null> {
+  try {
+    const db = await openIntegrityDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(INTEGRITY_STORE_NAME, "readonly");
+      const store = tx.objectStore(INTEGRITY_STORE_NAME);
+      const req = store.get("signatureHash");
+      req.onsuccess = () => resolve(req.result ?? null);
+      req.onerror = () => resolve(null);
+    });
+  } catch { return null; }
+}
+
+async function setStoredBaseline(hash: string): Promise<void> {
+  try {
+    const db = await openIntegrityDB();
+    const tx = db.transaction(INTEGRITY_STORE_NAME, "readwrite");
+    tx.objectStore(INTEGRITY_STORE_NAME).put(hash, "signatureHash");
+  } catch { /* fail silently */ }
+}
 
 /**
  * Compute a simple hash of a string (for web-side verification)

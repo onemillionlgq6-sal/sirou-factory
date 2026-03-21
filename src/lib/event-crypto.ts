@@ -27,12 +27,12 @@ export const setEventKey = (key: string) => memoryProvider.setKey(key);
 export const clearEventKey = () => memoryProvider.clearKey();
 export const setKeyProvider = (p: KeyProvider) => { activeProvider = p; };
 
-/** Fallback passphrase when no master key is set (for non-vault data) */
-const FALLBACK_KEY = "sirou-event-default-key-v1";
-
 async function resolveKey(): Promise<string> {
   const k = await activeProvider.getKey();
-  return k || FALLBACK_KEY;
+  if (!k) {
+    throw new Error("[EventCrypto] No encryption key set. Call setEventKey() before encrypting/decrypting.");
+  }
+  return k;
 }
 
 /** Encrypt an event payload object */
