@@ -1,28 +1,19 @@
 import { useState, useCallback, useEffect } from "react";
 import FactoryHeader from "@/components/factory/FactoryHeader";
-import AppIdeaInput from "@/components/factory/AppIdeaInput";
-import TransparencyCenter from "@/components/factory/TransparencyCenter";
-import type { ActionNotification } from "@/components/factory/TransparencyCenter";
-import AppPreview from "@/components/factory/AppPreview";
-import TestingCenter from "@/components/factory/TestingCenter";
-import FactoryActions from "@/components/factory/FactoryActions";
-import AIPlannerEngine from "@/components/factory/AIPlannerEngine";
-import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
-import InteractiveBlueprint from "@/components/factory/InteractiveBlueprint";
-import AppBuilderEngine from "@/components/factory/AppBuilderEngine";
-import HealthDashboard from "@/components/factory/HealthDashboard";
-import SovereignCoreLauncher from "@/components/factory/SovereignCoreLauncher";
 import TemplatesLauncher from "@/components/factory/TemplatesLauncher";
+import SovereignCoreLauncher from "@/components/factory/SovereignCoreLauncher";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import BuildGuardPanel from "@/components/factory/BuildGuardPanel";
-import CompliancePanel from "@/components/factory/CompliancePanel";
+import PipelineIndicator from "@/components/factory/PipelineIndicator";
+import LeftColumn from "@/components/factory/LeftColumn";
+import RightColumn from "@/components/factory/RightColumn";
+import type { Phase } from "@/components/factory/PipelineIndicator";
+import type { ActionNotification } from "@/components/factory/TransparencyCenter";
+import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
 import { toast } from "sonner";
 import { getStoredCredentials } from "@/lib/supabase";
 import { useI18n } from "@/lib/i18n";
 import { initGlobalErrorHandlers } from "@/lib/health-monitor";
 import factoryBg from "@/assets/factory-bg.jpg";
-
-type Phase = "idea" | "planning" | "blueprint" | "building" | "complete";
 
 const Index = () => {
   const { t } = useI18n();
@@ -36,9 +27,7 @@ const Index = () => {
     () => !!getStoredCredentials()
   );
 
-  useEffect(() => {
-    initGlobalErrorHandlers();
-  }, []);
+  useEffect(() => { initGlobalErrorHandlers(); }, []);
 
   const handleGenerate = useCallback((ideaText: string) => {
     setIdea(ideaText);
@@ -49,19 +38,11 @@ const Index = () => {
   const handleBlueprintReady = useCallback((bp: AppBlueprint) => {
     setBlueprint(bp);
     setPhase("blueprint");
-
-    // Generate transparency notifications from blueprint
     const notifs: ActionNotification[] = bp.features.map((f, i) => ({
-      id: String(i + 1),
-      level: f.risk,
-      title: f.name,
-      description: f.category === "external"
-        ? t("plan.api.desc")
-        : f.category === "plugin"
-        ? t("plan.db.desc")
-        : t("plan.tailwind.desc"),
-      approved: f.risk === "safe" ? true : undefined,
-      timestamp: new Date(),
+      id: String(i + 1), level: f.risk, title: f.name,
+      description: f.category === "external" ? t("plan.api.desc")
+        : f.category === "plugin" ? t("plan.db.desc") : t("plan.tailwind.desc"),
+      approved: f.risk === "safe" ? true : undefined, timestamp: new Date(),
     }));
     setNotifications(notifs);
     toast.success(t("toast.plan.generated"));
@@ -70,8 +51,6 @@ const Index = () => {
   const handleBlueprintApprove = useCallback((bp: AppBlueprint) => {
     setBlueprint(bp);
     setPhase("building");
-
-    // Auto-approve all notifications for approved features
     setNotifications((prev) =>
       prev.map((n) => {
         const feature = bp.features.find((f) => f.name === n.title);
@@ -84,175 +63,59 @@ const Index = () => {
   }, [t]);
 
   const handleBlueprintReject = useCallback(() => {
-    setPhase("idea");
-    setBlueprint(null);
-    setNotifications([]);
+    setPhase("idea"); setBlueprint(null); setNotifications([]);
     toast(t("blueprint.rejected"));
   }, [t]);
 
   const handleBuildComplete = useCallback(() => {
-    setPhase("complete");
-    toast.success(t("toast.published"));
+    setPhase("complete"); toast.success(t("toast.published"));
   }, [t]);
 
   const handleApprove = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, approved: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, approved: true } : n)));
     toast.success(t("toast.approved"));
   }, [t]);
 
   const handleReject = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, approved: false } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, approved: false } : n)));
     toast(t("toast.rejected"));
   }, [t]);
 
   const handlePublish = useCallback(() => {
-    const pendingApprovals = notifications.filter(
-      (n) => n.level !== "safe" && n.approved === undefined
-    );
-    if (pendingApprovals.length > 0) {
-      toast.error(`${pendingApprovals.length} ${t("toast.pending")}`);
-      return;
-    }
+    const pending = notifications.filter((n) => n.level !== "safe" && n.approved === undefined);
+    if (pending.length > 0) { toast.error(`${pending.length} ${t("toast.pending")}`); return; }
     toast.success(t("toast.published"));
   }, [notifications, t]);
 
-  const handleExport = useCallback(() => {
-    toast.success(t("toast.exported"));
-  }, [t]);
-
-  const handleBackendConnected = useCallback(() => {
-    setIsBackendConnected(true);
-  }, []);
-
-  const handleBackendDisconnected = useCallback(() => {
-    setIsBackendConnected(false);
-  }, []);
+  const handleExport = useCallback(() => { toast.success(t("toast.exported")); }, [t]);
 
   return (
-    <div
-      className="min-h-screen bg-cover bg-center bg-fixed"
-      style={{ backgroundImage: `url(${factoryBg})` }}
-    >
-      {/* Dark overlay for readability */}
+    <div className="min-h-screen bg-cover bg-center bg-fixed" style={{ backgroundImage: `url(${factoryBg})` }}>
       <div className="min-h-screen bg-black/30 backdrop-blur-[2px]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FactoryHeader isBackendConnected={isBackendConnected} />
-
-          {/* Pipeline indicator */}
-          <div className="flex items-center justify-center gap-2 mb-6">
-            {(["idea", "planning", "blueprint", "building", "complete"] as Phase[]).map((p, i) => (
-              <div key={p} className="flex items-center gap-2">
-                <div
-                  className={`h-2.5 w-2.5 rounded-full transition-all ${
-                    phase === p
-                      ? "sf-gradient-bg scale-125 sf-glow-green"
-                      : ["idea", "planning", "blueprint", "building", "complete"].indexOf(phase) > i
-                      ? "bg-sf-safe"
-                      : "bg-foreground/20"
-                  }`}
-                />
-                {i < 4 && (
-                  <div
-                    className={`h-px w-8 transition-all ${
-                      ["idea", "planning", "blueprint", "building", "complete"].indexOf(phase) > i
-                        ? "bg-sf-safe"
-                        : "bg-foreground/20"
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
+          <PipelineIndicator currentPhase={phase} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
-            <div className="space-y-6">
-              {/* Left column: Idea → Planner → Blueprint */}
-              {(phase === "idea" || phase === "planning") && (
-                <ErrorBoundary moduleName="AppIdeaInput" fallbackTitleAr="خطأ في مدخل الفكرة">
-                  <AppIdeaInput
-                    onGenerate={handleGenerate}
-                    isGenerating={isPlanning}
-                  />
-                </ErrorBoundary>
-              )}
-
-              {(phase === "planning" || phase === "blueprint") && (
-                <ErrorBoundary moduleName="AIPlannerEngine" fallbackTitleAr="خطأ في محرك التخطيط">
-                  <AIPlannerEngine
-                    idea={idea}
-                    onBlueprintReady={handleBlueprintReady}
-                    isPlanning={isPlanning}
-                    setIsPlanning={setIsPlanning}
-                  />
-                </ErrorBoundary>
-              )}
-
-              {phase === "blueprint" && blueprint && (
-                <ErrorBoundary moduleName="InteractiveBlueprint" fallbackTitleAr="خطأ في المخطط التفاعلي">
-                  <InteractiveBlueprint
-                    blueprint={blueprint}
-                    onApprove={handleBlueprintApprove}
-                    onReject={handleBlueprintReject}
-                  />
-                </ErrorBoundary>
-              )}
-
-              {phase === "building" && blueprint && (
-                <ErrorBoundary moduleName="AppBuilderEngine" fallbackTitleAr="خطأ في محرك البناء">
-                  <AppBuilderEngine
-                    blueprint={blueprint}
-                    onComplete={handleBuildComplete}
-                  />
-                </ErrorBoundary>
-              )}
-
-              <ErrorBoundary moduleName="TransparencyCenter" fallbackTitleAr="خطأ في مركز الشفافية">
-                <TransparencyCenter
-                  notifications={notifications}
-                  onApprove={handleApprove}
-                  onReject={handleReject}
-                />
-              </ErrorBoundary>
-            </div>
-
-            <div className="space-y-6">
-              <ErrorBoundary moduleName="AppPreview" fallbackTitleAr="خطأ في المعاينة">
-                <AppPreview isGenerated={phase === "complete"} appName={appName} />
-              </ErrorBoundary>
-              <ErrorBoundary moduleName="TestingCenter" fallbackTitleAr="خطأ في مركز الاختبار">
-                <TestingCenter
-                  blueprint={blueprint}
-                  appName={appName}
-                  isGenerated={phase === "complete"}
-                />
-              </ErrorBoundary>
-              <ErrorBoundary moduleName="FactoryActions" fallbackTitleAr="خطأ في أدوات التحكم">
-                <FactoryActions
-                  isGenerated={phase === "complete"}
-                  onPublish={handlePublish}
-                  onExport={handleExport}
-                  isBackendConnected={isBackendConnected}
-                  onBackendConnected={handleBackendConnected}
-                  onBackendDisconnected={handleBackendDisconnected}
-                />
-              </ErrorBoundary>
-              <ErrorBoundary moduleName="HealthDashboard" fallbackTitleAr="خطأ في لوحة الصحة">
-                <HealthDashboard />
-              </ErrorBoundary>
-              <ErrorBoundary moduleName="BuildGuard" fallbackTitleAr="خطأ في حارس البناء">
-                <BuildGuardPanel />
-              </ErrorBoundary>
-              <ErrorBoundary moduleName="CompliancePanel" fallbackTitleAr="خطأ في لوحة الامتثال">
-                <CompliancePanel blueprint={blueprint} appName={appName} />
-              </ErrorBoundary>
-            </div>
+            <LeftColumn
+              phase={phase} idea={idea} isPlanning={isPlanning}
+              setIsPlanning={setIsPlanning} blueprint={blueprint}
+              notifications={notifications} onGenerate={handleGenerate}
+              onBlueprintReady={handleBlueprintReady}
+              onBlueprintApprove={handleBlueprintApprove}
+              onBlueprintReject={handleBlueprintReject}
+              onBuildComplete={handleBuildComplete}
+              onApprove={handleApprove} onReject={handleReject}
+            />
+            <RightColumn
+              isComplete={phase === "complete"} appName={appName}
+              blueprint={blueprint} isBackendConnected={isBackendConnected}
+              onPublish={handlePublish} onExport={handleExport}
+              onBackendConnected={() => setIsBackendConnected(true)}
+              onBackendDisconnected={() => setIsBackendConnected(false)}
+            />
           </div>
 
-          {/* Launchers */}
           <div className="pb-12 space-y-4">
             <ErrorBoundary moduleName="TemplatesLauncher" fallbackTitleAr="خطأ في قوالب التطبيقات">
               <TemplatesLauncher />
