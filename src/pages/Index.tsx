@@ -12,6 +12,7 @@ import InteractiveBlueprint from "@/components/factory/InteractiveBlueprint";
 import AppBuilderEngine from "@/components/factory/AppBuilderEngine";
 import HealthDashboard from "@/components/factory/HealthDashboard";
 import SovereignCoreLauncher from "@/components/factory/SovereignCoreLauncher";
+import TemplatesLauncher from "@/components/factory/TemplatesLauncher";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import BuildGuardPanel from "@/components/factory/BuildGuardPanel";
 import CompliancePanel from "@/components/factory/CompliancePanel";
@@ -251,8 +252,11 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Sovereign Core Launcher */}
-          <div className="pb-12">
+          {/* Launchers */}
+          <div className="pb-12 space-y-4">
+            <ErrorBoundary moduleName="TemplatesLauncher" fallbackTitleAr="خطأ في قوالب التطبيقات">
+              <TemplatesLauncher />
+            </ErrorBoundary>
             <ErrorBoundary moduleName="SovereignCoreLauncher" fallbackTitleAr="خطأ في مركز القدرات">
               <SovereignCoreLauncher />
             </ErrorBoundary>
