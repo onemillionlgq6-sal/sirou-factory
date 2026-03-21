@@ -28,6 +28,7 @@ const Index = () => {
   const [isBackendConnected, setIsBackendConnected] = useState(
     () => !!getStoredCredentials()
   );
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => { initGlobalErrorHandlers(); }, []);
 
