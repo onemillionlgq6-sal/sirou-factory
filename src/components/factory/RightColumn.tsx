@@ -28,15 +28,6 @@ const RightColumn = memo(({
   onAppAIMessage, isGenerating,
 }: RightColumnProps) => (
   <div className="space-y-6">
-    {/* App Generation AI — Always visible */}
-    <ErrorBoundary moduleName="AIChatApp" fallbackTitleAr="خطأ في محادثة التطبيق">
-      <AIChatPanel
-        mode="app"
-        onSendMessage={(msg) => onAppAIMessage?.(msg)}
-        isGenerating={isGenerating}
-      />
-    </ErrorBoundary>
-
     <ErrorBoundary moduleName="AppPreview" fallbackTitleAr="خطأ في المعاينة">
       <AppPreview isGenerated={isComplete} appName={appName} blueprint={blueprint} />
     </ErrorBoundary>
