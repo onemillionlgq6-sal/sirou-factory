@@ -117,56 +117,73 @@ const Index = () => {
   const handleExport = useCallback(() => { toast.success(t("toast.exported")); }, [t]);
 
   return (
-    <div className="min-h-screen bg-cover bg-center bg-fixed" style={{ backgroundImage: `url(${factoryBg})` }}>
-      <div className="min-h-screen bg-black/30 backdrop-blur-[2px]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FactoryHeader isBackendConnected={isBackendConnected} />
-          <PipelineIndicator currentPhase={phase} />
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-12">
-            <LeftColumn
-              phase={phase} idea={idea} isPlanning={isPlanning}
-              setIsPlanning={setIsPlanning} blueprint={blueprint}
-              notifications={notifications} appName={appName}
-              onGenerate={handleGenerate}
-              onBlueprintReady={handleBlueprintReady}
-              onBlueprintApprove={handleBlueprintApprove}
-              onBlueprintReject={handleBlueprintReject}
-              onBuildComplete={handleBuildComplete}
-              onAuditProceed={handleAuditProceed}
-              onAuditRefine={handleAuditRefine}
-              onApprove={handleApprove} onReject={handleReject}
-            />
-            <RightColumn
-              isComplete={phase === "complete" || phase === "audit"} appName={appName}
-              blueprint={blueprint} isBackendConnected={isBackendConnected}
-              onPublish={handlePublish} onExport={handleExport}
-              onBackendConnected={() => setIsBackendConnected(true)}
-              onBackendDisconnected={() => setIsBackendConnected(false)}
-              onAppAIMessage={handleAppAIMessage}
-              isGenerating={isPlanning}
-            />
-          </div>
-
-          <div className="pb-12 space-y-4">
-            <ErrorBoundary moduleName="TemplatesLauncher" fallbackTitleAr="خطأ في قوالب التطبيقات">
-              <TemplatesLauncher />
-            </ErrorBoundary>
-            <ErrorBoundary moduleName="SovereignCoreLauncher" fallbackTitleAr="خطأ في مركز القدرات">
-              <SovereignCoreLauncher />
+    <div className="h-screen flex bg-cover bg-center bg-fixed overflow-hidden" style={{ backgroundImage: `url(${factoryBg})` }}>
+      <div className="h-screen flex w-full bg-black/30 backdrop-blur-[2px]">
+        {/* ─── LEFT SIDEBAR: AI Chat (fixed, 25%) ─── */}
+        <aside className="w-1/4 min-w-[280px] max-w-[360px] h-screen flex flex-col border-e border-border/30 bg-background/80 backdrop-blur-md z-20">
+          {/* App AI Chat */}
+          <div className="flex-1 overflow-y-auto">
+            <ErrorBoundary moduleName="AIChatApp" fallbackTitleAr="خطأ في محادثة التطبيق">
+              <AIChatPanel
+                mode="app"
+                onSendMessage={(msg) => handleAppAIMessage(msg)}
+                isGenerating={isPlanning}
+              />
             </ErrorBoundary>
           </div>
-        </div>
 
-        {/* Factory Development AI — Floating bottom-left */}
-        <div className="fixed bottom-4 start-4 z-50 w-80">
-          <ErrorBoundary moduleName="AIChatFactory" fallbackTitleAr="خطأ في محادثة المصنع">
-            <AIChatPanel
-              mode="factory"
-              onSendMessage={(msg) => handleFactoryAIMessage(msg)}
-            />
-          </ErrorBoundary>
-        </div>
+          {/* Factory AI Chat */}
+          <div className="border-t border-border/30">
+            <ErrorBoundary moduleName="AIChatFactory" fallbackTitleAr="خطأ في محادثة المصنع">
+              <AIChatPanel
+                mode="factory"
+                onSendMessage={(msg) => handleFactoryAIMessage(msg)}
+              />
+            </ErrorBoundary>
+          </div>
+        </aside>
+
+        {/* ─── RIGHT PANEL: Preview & Tools (75%) ─── */}
+        <main className="flex-1 h-screen overflow-y-auto">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <FactoryHeader isBackendConnected={isBackendConnected} />
+            <PipelineIndicator currentPhase={phase} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
+              <LeftColumn
+                phase={phase} idea={idea} isPlanning={isPlanning}
+                setIsPlanning={setIsPlanning} blueprint={blueprint}
+                notifications={notifications} appName={appName}
+                onGenerate={handleGenerate}
+                onBlueprintReady={handleBlueprintReady}
+                onBlueprintApprove={handleBlueprintApprove}
+                onBlueprintReject={handleBlueprintReject}
+                onBuildComplete={handleBuildComplete}
+                onAuditProceed={handleAuditProceed}
+                onAuditRefine={handleAuditRefine}
+                onApprove={handleApprove} onReject={handleReject}
+              />
+              <RightColumn
+                isComplete={phase === "complete" || phase === "audit"} appName={appName}
+                blueprint={blueprint} isBackendConnected={isBackendConnected}
+                onPublish={handlePublish} onExport={handleExport}
+                onBackendConnected={() => setIsBackendConnected(true)}
+                onBackendDisconnected={() => setIsBackendConnected(false)}
+                onAppAIMessage={handleAppAIMessage}
+                isGenerating={isPlanning}
+              />
+            </div>
+
+            <div className="pb-12 space-y-4">
+              <ErrorBoundary moduleName="TemplatesLauncher" fallbackTitleAr="خطأ في قوالب التطبيقات">
+                <TemplatesLauncher />
+              </ErrorBoundary>
+              <ErrorBoundary moduleName="SovereignCoreLauncher" fallbackTitleAr="خطأ في مركز القدرات">
+                <SovereignCoreLauncher />
+              </ErrorBoundary>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );
