@@ -102,49 +102,65 @@ const runningPlugins = new Map<string, RunningPlugin>();
  * Create a sandboxed Web Worker for compute-only plugins.
  * Worker has zero DOM access and communicates via structured messages only.
  */
+/** Sanitize plugin ID to prevent injection in template strings */
+function sanitizeId(id: string): string {
+  return id.replace(/[^a-zA-Z0-9_-]/g, "");
+}
+
 function createWorkerSandbox(manifest: PluginManifest): Worker {
-  // Wrap plugin code in a strict sandbox
-  const sandboxCode = `
+  const safeId = sanitizeId(manifest.id);
+
+  // Validate entrypoint doesn't contain dangerous constructs
+  const forbidden = /\b(eval|Function|importScripts|XMLHttpRequest|WebSocket)\s*\(/;
+  if (forbidden.test(manifest.entrypoint)) {
+    throw new Error(`[Sandbox] Plugin "${safeId}" contains forbidden code constructs`);
+  }
+
+  // Build sandbox code safely — plugin code is loaded via message, NOT interpolated
+  const loaderCode = `
     "use strict";
-    // Block all global access except messaging
     const _postMessage = self.postMessage.bind(self);
+    const PLUGIN_ID = "${safeId}";
     
-    // Freeze dangerous globals
-    const BLOCKED = ['importScripts', 'XMLHttpRequest', 'fetch', 'WebSocket', 'indexedDB'];
+    // Block dangerous globals
+    const BLOCKED = ['importScripts', 'XMLHttpRequest', 'fetch', 'WebSocket', 'indexedDB', 'eval', 'Function'];
     for (const name of BLOCKED) {
       Object.defineProperty(self, name, { value: undefined, writable: false, configurable: false });
     }
     
-    // Plugin API — only structured message passing
     const PluginAPI = {
       request(action, payload) {
         const requestId = crypto.randomUUID();
-        _postMessage({ type: "request", action, payload, requestId, pluginId: "${manifest.id}" });
+        _postMessage({ type: "request", action, payload, requestId, pluginId: PLUGIN_ID });
         return requestId;
       },
       emit(eventName, data) {
-        _postMessage({ type: "event", action: eventName, payload: data, requestId: "", pluginId: "${manifest.id}" });
+        _postMessage({ type: "event", action: eventName, payload: data, requestId: "", pluginId: PLUGIN_ID });
       }
     };
     
     self.onmessage = function(e) {
       if (e.data?.type === "response") {
         // Handle response from host
+      } else if (e.data?.type === "__LOAD_PLUGIN__") {
+        try {
+          const fn = new self.constructor.constructor("PluginAPI", e.data.code);
+          fn(PluginAPI);
+        } catch(err) {
+          _postMessage({ type: "event", action: "error", payload: { message: String(err) }, requestId: "", pluginId: PLUGIN_ID });
+        }
       }
     };
-    
-    // Execute plugin code
-    try {
-      ${manifest.entrypoint}
-    } catch(err) {
-      _postMessage({ type: "event", action: "error", payload: { message: err.message }, requestId: "", pluginId: "${manifest.id}" });
-    }
+    _postMessage({ type: "event", action: "ready", payload: {}, requestId: "", pluginId: PLUGIN_ID });
   `;
 
-  const blob = new Blob([sandboxCode], { type: "application/javascript" });
+  const blob = new Blob([loaderCode], { type: "application/javascript" });
   const url = URL.createObjectURL(blob);
   const worker = new Worker(url);
   URL.revokeObjectURL(url);
+
+  // Send plugin code via message instead of string interpolation
+  worker.postMessage({ type: "__LOAD_PLUGIN__", code: manifest.entrypoint });
 
   return worker;
 }
@@ -154,13 +170,20 @@ function createWorkerSandbox(manifest: PluginManifest): Worker {
  * Iframe runs in a null origin with no access to parent window.
  */
 function createIframeSandbox(manifest: PluginManifest): HTMLIFrameElement {
+  const safeId = sanitizeId(manifest.id);
+
+  // Validate entrypoint
+  const forbidden = /\b(eval|Function)\s*\(/;
+  if (forbidden.test(manifest.entrypoint)) {
+    throw new Error(`[Sandbox] Plugin "${safeId}" contains forbidden code constructs`);
+  }
+
   const iframe = document.createElement("iframe");
-  // Strict sandbox: no scripts by default, no forms, no popups, no same-origin
   iframe.sandbox.add("allow-scripts");
-  // No allow-same-origin — iframe gets null origin, zero parent access
   iframe.style.display = "none";
   iframe.style.border = "none";
 
+  // Iframe loads a safe loader that receives plugin code via postMessage
   const html = `
     <!DOCTYPE html>
     <html>
@@ -168,17 +191,29 @@ function createIframeSandbox(manifest: PluginManifest): HTMLIFrameElement {
     <body>
     <script>
       "use strict";
-      const PluginAPI = {
-        request(action, payload) {
-          const requestId = crypto.randomUUID();
-          parent.postMessage({ type: "request", action, payload, requestId, pluginId: "${manifest.id}" }, "*");
+      var PLUGIN_ID = "${safeId}";
+      // Block dangerous globals
+      Object.defineProperty(window, 'eval', { value: undefined, writable: false });
+      Object.defineProperty(window, 'Function', { value: undefined, writable: false });
+
+      var PluginAPI = {
+        request: function(action, payload) {
+          var requestId = crypto.randomUUID();
+          parent.postMessage({ type: "request", action: action, payload: payload, requestId: requestId, pluginId: PLUGIN_ID }, "*");
           return requestId;
         }
       };
-      try { ${manifest.entrypoint} }
-      catch(err) {
-        parent.postMessage({ type: "event", action: "error", payload: { message: err.message }, requestId: "", pluginId: "${manifest.id}" }, "*");
-      }
+      window.addEventListener("message", function(e) {
+        if (e.data && e.data.type === "__LOAD_PLUGIN__") {
+          try {
+            var fn = new (function(){}).constructor("PluginAPI", e.data.code);
+            fn(PluginAPI);
+          } catch(err) {
+            parent.postMessage({ type: "event", action: "error", payload: { message: String(err) }, requestId: "", pluginId: PLUGIN_ID }, "*");
+          }
+        }
+      });
+      parent.postMessage({ type: "event", action: "ready", payload: {}, requestId: "", pluginId: PLUGIN_ID }, "*");
     </script>
     </body>
     </html>
@@ -186,6 +221,11 @@ function createIframeSandbox(manifest: PluginManifest): HTMLIFrameElement {
 
   iframe.srcdoc = html;
   document.body.appendChild(iframe);
+
+  // Send plugin code via postMessage after iframe loads
+  iframe.addEventListener("load", () => {
+    iframe.contentWindow?.postMessage({ type: "__LOAD_PLUGIN__", code: manifest.entrypoint }, "*");
+  });
 
   return iframe;
 }
