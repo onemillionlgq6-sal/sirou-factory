@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { THEMES, type AppTheme } from "@/lib/design-theme-engine";
 import {
   Home, Settings, User, Bell, Search, ShoppingCart, Heart, Star,
   ChevronRight, Menu, BarChart3, Camera, MapPin, QrCode, Mic,
