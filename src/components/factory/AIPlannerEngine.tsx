@@ -32,6 +32,7 @@ export interface AppBlueprint {
   plugins: string[];
   hardwareNeeds?: string[];
   suggestions?: string[];
+  theme?: AppTheme;
 }
 
 // ─── Keyword-based app type detection ───
