@@ -124,7 +124,7 @@ const Index = () => {
               onApprove={handleApprove} onReject={handleReject}
             />
             <RightColumn
-              isComplete={phase === "complete"} appName={appName}
+              isComplete={phase === "complete" || phase === "audit"} appName={appName}
               blueprint={blueprint} isBackendConnected={isBackendConnected}
               onPublish={handlePublish} onExport={handleExport}
               onBackendConnected={() => setIsBackendConnected(true)}
