@@ -40,6 +40,7 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [userRole, setUserRole] = useState<"user" | "admin">("user");
   // Splash
   const [splashDone, setSplashDone] = useState(false);
 
