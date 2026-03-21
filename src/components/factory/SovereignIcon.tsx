@@ -7,7 +7,7 @@ interface SovereignIconProps {
 }
 
 const SovereignIcon = ({ size = "md", glowing = true }: SovereignIconProps) => {
-  const dims = { sm: 36, md: 48, lg: 64, xl: 120 }[size];
+  const dims = { sm: 56, md: 80, lg: 110, xl: 180 }[size];
 
   return (
     <motion.div
