@@ -124,7 +124,7 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
                   key={value}
                   variant={prefs.aiProvider === value ? "default" : "outline"}
                   size="sm"
-                  onClick={() => save({ ...prefs, aiProvider: value })}
+                  onClick={() => handleAiChange(value)}
                   className={
                     prefs.aiProvider === value
                       ? "sf-gradient-bg text-primary-foreground"
