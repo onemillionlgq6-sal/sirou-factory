@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Loader2, CheckCircle2, Shield, Sparkles, ArrowDown, Camera, MapPin, QrCode, Mic, Bell, Bluetooth } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
+import { detectThemeFromDescription, type AppTheme } from "@/lib/design-theme-engine";
 
 export interface BlueprintEntity {
   name: string;
