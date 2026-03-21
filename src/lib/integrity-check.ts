@@ -170,10 +170,10 @@ async function verifyWebIntegrity(timestamp: string): Promise<IntegrityResult> {
       .join("|");
 
     const fingerprint = await sha256(scripts + document.title);
-    const baseline = localStorage.getItem(INTEGRITY_STORE_KEY);
+    const baseline = await getStoredBaseline();
 
     if (!baseline) {
-      localStorage.setItem(INTEGRITY_STORE_KEY, fingerprint);
+      await setStoredBaseline(fingerprint);
       return {
         verified: true,
         platform: "web",
