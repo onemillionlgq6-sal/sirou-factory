@@ -3,6 +3,7 @@ import AppIdeaInput from "@/components/factory/AppIdeaInput";
 import AIPlannerEngine from "@/components/factory/AIPlannerEngine";
 import InteractiveBlueprint from "@/components/factory/InteractiveBlueprint";
 import AppBuilderEngine from "@/components/factory/AppBuilderEngine";
+import QualityGate from "@/components/factory/QualityGate";
 import TransparencyCenter from "@/components/factory/TransparencyCenter";
 import type { ActionNotification } from "@/components/factory/TransparencyCenter";
 import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
@@ -16,19 +17,22 @@ interface LeftColumnProps {
   setIsPlanning: (v: boolean) => void;
   blueprint: AppBlueprint | null;
   notifications: ActionNotification[];
+  appName: string;
   onGenerate: (idea: string) => void;
   onBlueprintReady: (bp: AppBlueprint) => void;
   onBlueprintApprove: (bp: AppBlueprint) => void;
   onBlueprintReject: () => void;
   onBuildComplete: () => void;
+  onAuditProceed: () => void;
+  onAuditRefine: () => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
 }
 
 const LeftColumn = memo(({
-  phase, idea, isPlanning, setIsPlanning, blueprint, notifications,
+  phase, idea, isPlanning, setIsPlanning, blueprint, notifications, appName,
   onGenerate, onBlueprintReady, onBlueprintApprove, onBlueprintReject,
-  onBuildComplete, onApprove, onReject,
+  onBuildComplete, onAuditProceed, onAuditRefine, onApprove, onReject,
 }: LeftColumnProps) => (
   <div className="space-y-6">
     {(phase === "idea" || phase === "planning") && (
@@ -61,6 +65,17 @@ const LeftColumn = memo(({
     {phase === "building" && blueprint && (
       <ErrorBoundary moduleName="AppBuilderEngine" fallbackTitleAr="خطأ في محرك البناء">
         <AppBuilderEngine blueprint={blueprint} onComplete={onBuildComplete} />
+      </ErrorBoundary>
+    )}
+
+    {phase === "audit" && blueprint && (
+      <ErrorBoundary moduleName="QualityGate" fallbackTitleAr="خطأ في بوابة الجودة">
+        <QualityGate
+          blueprint={blueprint}
+          appName={appName}
+          onProceed={onAuditProceed}
+          onRefine={onAuditRefine}
+        />
       </ErrorBoundary>
     )}
 
