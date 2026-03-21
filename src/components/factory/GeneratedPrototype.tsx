@@ -355,21 +355,66 @@ const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => 
     <div className="flex-1 overflow-auto p-4 space-y-4">
       <div className="flex flex-col items-center py-6">
         <div className="w-20 h-20 rounded-full flex items-center justify-center mb-3"
-          style={{ background: "linear-gradient(135deg, hsl(55,90%,50%), hsl(90,60%,45%))" }}>
-          <User className="h-10 w-10 text-[hsl(220,25%,8%)]" />
+          style={{ background: grad }}>
+          <User className="h-10 w-10" style={{ color: theme.accentText }} />
         </div>
         <p className="font-bold text-lg">User Profile</p>
-        <p className="text-xs text-[hsl(210,10%,55%)]">{email || "user@sirou.app"}</p>
+        <p className="text-xs" style={{ color: theme.textMuted }}>{email || "user@sirou.app"}</p>
+        {/* Role badge */}
+        <span className={`mt-2 text-[10px] font-bold px-3 py-1 rounded-full ${
+          userRole === "admin" ? "bg-[hsl(55,90%,50%)]/20 text-[hsl(55,90%,55%)]" : "bg-[hsl(210,50%,50%)]/20 text-[hsl(210,60%,65%)]"
+        }`}>
+          {userRole === "admin" ? "🛡️ ADMIN" : "👤 USER"}
+        </span>
       </div>
-      {["Edit Profile", "Preferences", "Security", "About"].map(item => (
+
+      {/* Role switcher (demo) */}
+      <div className="flex gap-2">
+        <button onClick={() => { setUserRole("user"); toast("Switched to User role"); }}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${userRole === "user" ? "text-white" : "border border-[hsl(220,20%,18%)]"}`}
+          style={userRole === "user" ? { background: grad, color: theme.accentText } : undefined}>
+          👤 User
+        </button>
+        <button onClick={() => { setUserRole("admin"); toast("Switched to Admin role"); }}
+          className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${userRole === "admin" ? "text-white" : "border border-[hsl(220,20%,18%)]"}`}
+          style={userRole === "admin" ? { background: grad, color: theme.accentText } : undefined}>
+          🛡️ Admin
+        </button>
+      </div>
+
+      {["Edit Profile", "Preferences", "Security"].map(item => (
         <button key={item} onClick={() => toast(`${item}: Coming soon`)}
-          className="w-full flex items-center justify-between p-3 rounded-lg bg-[hsl(220,20%,12%)] border border-[hsl(220,20%,18%)] active:scale-[0.98] transition-transform">
+          className="w-full flex items-center justify-between p-3 rounded-lg active:scale-[0.98] transition-transform"
+          style={{ background: theme.surface, borderColor: theme.surfaceBorder, borderWidth: 1, borderStyle: "solid" }}>
           <span className="text-sm font-medium">{item}</span>
-          <ChevronRight className="h-4 w-4 text-[hsl(210,10%,55%)]" />
+          <ChevronRight className="h-4 w-4" style={{ color: theme.textMuted }} />
         </button>
       ))}
-      <button onClick={() => { setScreen("login"); setEmail(""); setPassword(""); toast("Logged out"); }}
-        className="w-full py-3 rounded-xl text-sm font-bold border border-[hsl(0,72%,55%)/30] text-[hsl(0,72%,60%)] active:scale-[0.98] transition-transform">
+
+      {/* Admin-only section */}
+      {userRole === "admin" ? (
+        <div className="space-y-2">
+          <p className="text-xs font-bold" style={{ color: theme.accent }}>🔐 Admin Panel</p>
+          {["User Management", "System Settings", "Sovereign Core", "Audit Logs"].map(item => (
+            <button key={item} onClick={() => toast(`${item}: Admin access granted`)}
+              className="w-full flex items-center justify-between p-3 rounded-lg active:scale-[0.98] transition-transform"
+              style={{ background: theme.surface, borderColor: theme.accent + "33", borderWidth: 1, borderStyle: "solid" }}>
+              <span className="text-sm font-medium">{item}</span>
+              <ChevronRight className="h-4 w-4" style={{ color: theme.accent }} />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <button onClick={() => toast.error("🔒 Access denied — Admin privileges required")}
+          className="w-full flex items-center justify-between p-3 rounded-lg opacity-50 active:scale-[0.98] transition-transform"
+          style={{ background: theme.surface, borderColor: theme.surfaceBorder, borderWidth: 1, borderStyle: "solid" }}>
+          <span className="text-sm font-medium">🔒 Admin Panel</span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">Restricted</span>
+        </button>
+      )}
+
+      <button onClick={() => { setScreen("login"); setEmail(""); setPassword(""); setUserRole("user"); toast("Logged out"); }}
+        className="w-full py-3 rounded-xl text-sm font-bold border border-[hsl(0,72%,55%)]/30 text-[hsl(0,72%,60%)] active:scale-[0.98] transition-transform">
         Sign Out
       </button>
     </div>
