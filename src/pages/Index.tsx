@@ -68,8 +68,21 @@ const Index = () => {
   }, [t]);
 
   const handleBuildComplete = useCallback(() => {
-    setPhase("complete"); toast.success(t("toast.published"));
+    setPhase("audit");
+    toast.success(t("toast.published"));
   }, [t]);
+
+  const handleAuditProceed = useCallback(() => {
+    setPhase("complete");
+    toast.success("✅ App passed Quality Gate — ready to export!");
+  }, []);
+
+  const handleAuditRefine = useCallback(() => {
+    setPhase("idea");
+    setBlueprint(null);
+    setNotifications([]);
+    toast("🔧 Returning to design mode for refinements...");
+  }, []);
 
   const handleApprove = useCallback((id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, approved: true } : n)));
