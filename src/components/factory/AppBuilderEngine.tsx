@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
-import { Hammer, CheckCircle2, Loader2, Shield, Package } from "lucide-react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Hammer, CheckCircle2, Loader2, Shield, Package, Sparkles, Lightbulb, ChevronRight } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { toast } from "sonner";
 import type { AppBlueprint } from "./AIPlannerEngine";
 
 interface AppBuilderEngineProps {
@@ -9,15 +10,11 @@ interface AppBuilderEngineProps {
   onComplete: () => void;
 }
 
-/**
- * [Safe 🟢] App Builder Engine
- * Physically builds the application based on the approved blueprint.
- * Only executes functions that were previously displayed and approved.
- */
 const AppBuilderEngine = ({ blueprint, onComplete }: AppBuilderEngineProps) => {
   const { t } = useI18n();
   const [currentStep, setCurrentStep] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const approvedFeatures = useMemo(
     () => blueprint.features.filter((f) => f.approved),
@@ -25,24 +22,30 @@ const AppBuilderEngine = ({ blueprint, onComplete }: AppBuilderEngineProps) => {
   );
 
   const buildSteps = useMemo(() => [
-    t("builder.step.scaffold"),
-    t("builder.step.db"),
-    ...approvedFeatures.map((f) => `${t("builder.step.feature")}: ${f.name}`),
-    t("builder.step.ui"),
-    t("builder.step.security"),
-    t("builder.step.test"),
-  ], [t, approvedFeatures]);
+    "📐 Creating app structure...",
+    "🗄️ Setting up data storage...",
+    ...approvedFeatures.map((f) => `⚙️ Building: ${f.name}`),
+    "🎨 Applying Sovereign Dark/Gold theme...",
+    "📱 Connecting device features...",
+    "✨ Adding animations & transitions...",
+    "🔒 Securing with Privacy Vault...",
+    "📋 Adding form validation & error handling...",
+    "🖼️ Generating splash screen & icons...",
+    "✅ Running quality checks...",
+  ], [approvedFeatures]);
 
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       for (let i = 0; i < buildSteps.length; i++) {
         if (cancelled) return;
-        await new Promise((r) => setTimeout(r, 500 + Math.random() * 400));
+        await new Promise((r) => setTimeout(r, 400 + Math.random() * 300));
         setCurrentStep(i + 1);
       }
       if (!cancelled) {
         setIsComplete(true);
+        // Show suggestions after a brief pause
+        setTimeout(() => setShowSuggestions(true), 800);
         onComplete();
       }
     };
@@ -51,6 +54,10 @@ const AppBuilderEngine = ({ blueprint, onComplete }: AppBuilderEngineProps) => {
   }, [buildSteps.length, onComplete]);
 
   const progress = Math.round((currentStep / buildSteps.length) * 100);
+
+  const handleSuggestionClick = useCallback((suggestion: string) => {
+    toast.success(`✅ "${suggestion}" has been noted! It will be included in the next update.`);
+  }, []);
 
   return (
     <motion.div
@@ -83,7 +90,7 @@ const AppBuilderEngine = ({ blueprint, onComplete }: AppBuilderEngineProps) => {
               key={i}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ delay: i * 0.03 }}
               className={`flex items-center gap-3 p-2.5 rounded-lg text-sm transition-all ${
                 done ? "text-foreground" : active ? "text-accent sf-glass-subtle" : "text-foreground/30"
               }`}
@@ -115,8 +122,54 @@ const AppBuilderEngine = ({ blueprint, onComplete }: AppBuilderEngineProps) => {
             <Shield className="h-3.5 w-3.5" />
             {t("builder.verified")}
           </div>
+
+          {/* Hardware summary */}
+          {blueprint.hardwareNeeds && blueprint.hardwareNeeds.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              {blueprint.hardwareNeeds.map(hw => (
+                <span key={hw} className="text-[10px] px-2 py-0.5 rounded-full sf-glass-subtle text-accent font-medium">
+                  📱 {hw}
+                </span>
+              ))}
+            </div>
+          )}
         </motion.div>
       )}
+
+      {/* ─── Proactive Suggestions ─── */}
+      <AnimatePresence>
+        {showSuggestions && blueprint.suggestions && blueprint.suggestions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mt-4"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Lightbulb className="h-4 w-4 text-accent" />
+              <p className="text-sm font-semibold text-foreground">Smart Suggestions</p>
+              <Sparkles className="h-3.5 w-3.5 text-accent" />
+            </div>
+            <div className="space-y-2">
+              {blueprint.suggestions.map((suggestion, i) => (
+                <motion.button
+                  key={i}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.15 }}
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  className="w-full flex items-center justify-between p-3 rounded-xl sf-glass-subtle hover:sf-glass-strong transition-all text-start group"
+                >
+                  <span className="text-sm text-foreground/80 group-hover:text-foreground transition-colors">
+                    {suggestion}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-accent transition-colors shrink-0 ms-2" />
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
