@@ -21,12 +21,21 @@ type Screen = "splash" | "login" | "home" | "dashboard" | "profile" | "cart" | "
 // ═══ DEV MODE: Auto-login as Super Admin ═══
 const IS_DEV_MODE = true;
 
-const MOCK_USERS = [
-  { id: 1, name: "Root Admin (You)", email: "root@sirou.app", role: "admin" as const, status: "active" as const, lastLogin: "Just now" },
-  { id: 2, name: "Sarah Engineer", email: "sarah@company.com", role: "admin" as const, status: "active" as const, lastLogin: "2h ago" },
-  { id: 3, name: "Omar User", email: "omar@email.com", role: "user" as const, status: "active" as const, lastLogin: "1d ago" },
-  { id: 4, name: "Lina Tester", email: "lina@test.io", role: "user" as const, status: "suspended" as const, lastLogin: "5d ago" },
-  { id: 5, name: "Dev Bot", email: "bot@sirou.app", role: "user" as const, status: "active" as const, lastLogin: "3h ago" },
+interface MockUser {
+  id: number;
+  name: string;
+  email: string;
+  role: "admin" | "user";
+  status: "active" | "suspended";
+  lastLogin: string;
+}
+
+const MOCK_USERS: MockUser[] = [
+  { id: 1, name: "Root Admin (You)", email: "root@sirou.app", role: "admin", status: "active", lastLogin: "Just now" },
+  { id: 2, name: "Sarah Engineer", email: "sarah@company.com", role: "admin", status: "active", lastLogin: "2h ago" },
+  { id: 3, name: "Omar User", email: "omar@email.com", role: "user", status: "active", lastLogin: "1d ago" },
+  { id: 4, name: "Lina Tester", email: "lina@test.io", role: "user", status: "suspended", lastLogin: "5d ago" },
+  { id: 5, name: "Dev Bot", email: "bot@sirou.app", role: "user", status: "active", lastLogin: "3h ago" },
 ];
 
 const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => {
