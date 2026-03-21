@@ -24,7 +24,7 @@ const PipelineIndicator = memo(({ currentPhase }: PipelineIndicatorProps) => {
                 : "bg-foreground/20"
             }`}
           />
-          {i < 4 && (
+          {i < PHASES.length - 1 && (
             <div
               className={`h-px w-8 transition-all ${
                 currentIndex > i ? "bg-sf-safe" : "bg-foreground/20"
