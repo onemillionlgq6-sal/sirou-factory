@@ -101,7 +101,7 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
                   key={value}
                   variant={prefs.theme === value ? "default" : "outline"}
                   size="sm"
-                  onClick={() => save({ ...prefs, theme: value })}
+                  onClick={() => handleThemeChange(value)}
                   className={
                     prefs.theme === value
                       ? "sf-gradient-bg text-primary-foreground"
