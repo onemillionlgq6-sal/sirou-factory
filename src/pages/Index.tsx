@@ -68,8 +68,21 @@ const Index = () => {
   }, [t]);
 
   const handleBuildComplete = useCallback(() => {
-    setPhase("complete"); toast.success(t("toast.published"));
+    setPhase("audit");
+    toast.success(t("toast.published"));
   }, [t]);
+
+  const handleAuditProceed = useCallback(() => {
+    setPhase("complete");
+    toast.success("✅ App passed Quality Gate — ready to export!");
+  }, []);
+
+  const handleAuditRefine = useCallback(() => {
+    setPhase("idea");
+    setBlueprint(null);
+    setNotifications([]);
+    toast("🔧 Returning to design mode for refinements...");
+  }, []);
 
   const handleApprove = useCallback((id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, approved: true } : n)));
@@ -100,15 +113,18 @@ const Index = () => {
             <LeftColumn
               phase={phase} idea={idea} isPlanning={isPlanning}
               setIsPlanning={setIsPlanning} blueprint={blueprint}
-              notifications={notifications} onGenerate={handleGenerate}
+              notifications={notifications} appName={appName}
+              onGenerate={handleGenerate}
               onBlueprintReady={handleBlueprintReady}
               onBlueprintApprove={handleBlueprintApprove}
               onBlueprintReject={handleBlueprintReject}
               onBuildComplete={handleBuildComplete}
+              onAuditProceed={handleAuditProceed}
+              onAuditRefine={handleAuditRefine}
               onApprove={handleApprove} onReject={handleReject}
             />
             <RightColumn
-              isComplete={phase === "complete"} appName={appName}
+              isComplete={phase === "complete" || phase === "audit"} appName={appName}
               blueprint={blueprint} isBackendConnected={isBackendConnected}
               onPublish={handlePublish} onExport={handleExport}
               onBackendConnected={() => setIsBackendConnected(true)}

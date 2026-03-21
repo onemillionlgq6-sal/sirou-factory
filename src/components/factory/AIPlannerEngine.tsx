@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Loader2, CheckCircle2, Shield, Sparkles, ArrowDown, Camera, MapPin, QrCode, Mic, Bell, Bluetooth } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
+import { detectThemeFromDescription, type AppTheme } from "@/lib/design-theme-engine";
 
 export interface BlueprintEntity {
   name: string;
@@ -31,6 +32,7 @@ export interface AppBlueprint {
   plugins: string[];
   hardwareNeeds?: string[];
   suggestions?: string[];
+  theme?: AppTheme;
 }
 
 // ─── Keyword-based app type detection ───
@@ -285,6 +287,9 @@ const AIPlannerEngine = ({ idea, onBlueprintReady, isPlanning, setIsPlanning }: 
       if (!allFeatures.some(f => f.name === pf.name)) allFeatures.push(pf);
     }
 
+    // Detect theme from description
+    const detectedTheme = detectThemeFromDescription(idea);
+
     const blueprint: AppBlueprint = {
       appName,
       description: idea,
@@ -294,6 +299,7 @@ const AIPlannerEngine = ({ idea, onBlueprintReady, isPlanning, setIsPlanning }: 
       plugins: ["Authentication", "File Storage", "Sovereign Vault"],
       hardwareNeeds: mergedHW,
       suggestions: base.suggestions || FALLBACK_PROFILE.suggestions,
+      theme: detectedTheme,
     };
 
     onBlueprintReady(blueprint);

@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { THEMES, type AppTheme } from "@/lib/design-theme-engine";
 import {
   Home, Settings, User, Bell, Search, ShoppingCart, Heart, Star,
   ChevronRight, Menu, BarChart3, Camera, MapPin, QrCode, Mic,
@@ -17,6 +18,10 @@ interface GeneratedPrototypeProps {
 type Screen = "splash" | "login" | "home" | "dashboard" | "profile" | "cart" | "detail" | "camera" | "settings";
 
 const GeneratedPrototype = ({ appName, blueprint }: GeneratedPrototypeProps) => {
+  // Dynamic theme from blueprint or default
+  const theme = useMemo<AppTheme>(() => blueprint?.theme || THEMES.sovereign, [blueprint?.theme]);
+  const grad = `linear-gradient(135deg, ${theme.primary}, ${theme.primaryEnd})`;
+
   const [screen, setScreen] = useState<Screen>("splash");
   const [items, setItems] = useState([
     { id: 1, name: "Premium Feature", done: false },
