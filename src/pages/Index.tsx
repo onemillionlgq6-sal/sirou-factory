@@ -113,11 +113,14 @@ const Index = () => {
             <LeftColumn
               phase={phase} idea={idea} isPlanning={isPlanning}
               setIsPlanning={setIsPlanning} blueprint={blueprint}
-              notifications={notifications} onGenerate={handleGenerate}
+              notifications={notifications} appName={appName}
+              onGenerate={handleGenerate}
               onBlueprintReady={handleBlueprintReady}
               onBlueprintApprove={handleBlueprintApprove}
               onBlueprintReject={handleBlueprintReject}
               onBuildComplete={handleBuildComplete}
+              onAuditProceed={handleAuditProceed}
+              onAuditRefine={handleAuditRefine}
               onApprove={handleApprove} onReject={handleReject}
             />
             <RightColumn
