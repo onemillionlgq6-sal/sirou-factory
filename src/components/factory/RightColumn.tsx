@@ -25,7 +25,7 @@ const RightColumn = memo(({
 }: RightColumnProps) => (
   <div className="space-y-6">
     <ErrorBoundary moduleName="AppPreview" fallbackTitleAr="خطأ في المعاينة">
-      <AppPreview isGenerated={isComplete} appName={appName} />
+      <AppPreview isGenerated={isComplete} appName={appName} blueprint={blueprint} />
     </ErrorBoundary>
     <ErrorBoundary moduleName="TestingCenter" fallbackTitleAr="خطأ في مركز الاختبار">
       <TestingCenter blueprint={blueprint} appName={appName} isGenerated={isComplete} />
