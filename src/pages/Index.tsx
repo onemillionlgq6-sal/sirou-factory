@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import FactoryHeader from "@/components/factory/FactoryHeader";
 import TemplatesLauncher from "@/components/factory/TemplatesLauncher";
 import SovereignCoreLauncher from "@/components/factory/SovereignCoreLauncher";
