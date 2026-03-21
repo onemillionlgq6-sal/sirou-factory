@@ -98,8 +98,7 @@
     @apply border-border/20;
   }
   body {
-    @apply text-foreground font-sans antialiased;
-    background: transparent;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 
