@@ -17,7 +17,8 @@ const PREFS_KEY = "sirou_factory_prefs";
 
 interface FactoryPrefs {
   theme: "dark" | "light" | "system";
-  aiProvider: "built-in" | "openai" | "anthropic";
+  aiProvider: "built-in" | "openai" | "anthropic" | "deepseek";
+  deepseekKey: string;
 }
 
 const loadPrefs = (): FactoryPrefs => {
