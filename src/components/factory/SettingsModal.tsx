@@ -77,7 +77,15 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
     { value: "built-in", label: t("settings.ai.builtin") },
     { value: "openai", label: "OpenAI" },
     { value: "anthropic", label: "Anthropic" },
+    { value: "deepseek", label: "DeepSeek" },
   ];
+
+  const [showDeepseekKey, setShowDeepseekKey] = useState(false);
+
+  const handleDeepseekKeyChange = useCallback((key: string) => {
+    const updated = { ...prefs, deepseekKey: key };
+    save(updated);
+  }, [prefs, save]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
