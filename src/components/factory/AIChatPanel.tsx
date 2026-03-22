@@ -5,6 +5,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { sendAIMessage, hasActiveAPIKey, getActiveProvider, type AIMessage } from "@/lib/ai-provider";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
@@ -150,32 +151,51 @@ const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) =>
 
     onSendMessage?.(text, mode, imageFiles.length > 0 ? imageFiles : undefined);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const hasImages = imagePreviews.length > 0;
-      let aiText: string;
+    // Build AI message history
+    const aiMessages: AIMessage[] = [
+      {
+        role: "system",
+        content: mode === "app"
+          ? "أنت مساعد ذكي متخصص في بناء التطبيقات. ساعد المستخدم في تصميم وبناء تطبيقه. أجب بالعربية. كن مختصراً ومفيداً."
+          : "أنت مساعد متخصص في تطوير وتحسين المصنع البرمجي. أجب بالعربية. كن تقنياً ودقيقاً.",
+      },
+      ...messages.filter(m => m.text).map(m => ({
+        role: (m.role === "user" ? "user" : "assistant") as AIMessage["role"],
+        content: m.text,
+      })),
+      { role: "user" as const, content: text || "تحليل الصور المرفقة" },
+    ];
 
-      if (mode === "app") {
-        if (hasImages && text) {
-          aiText = `🎨 تم استلام ${imagePreviews.length} صورة مرجعية مع الوصف. جاري تحليل التصميم واستخراج: الألوان، التخطيط، الأيقونات، والخطوط...`;
-        } else if (hasImages) {
-          aiText = `🔍 تم استلام ${imagePreviews.length} صورة تصميم. جاري تحليل العناصر المرئية: نظام الألوان، الهيكل، والأنماط...`;
-        } else {
-          aiText = `✅ تم استلام طلبك. جاري تحليل: "${text.slice(0, 50)}${text.length > 50 ? "..." : ""}"...`;
-        }
-      } else {
-        aiText = `🔧 تم تسجيل طلب تطوير المصنع. جاري المعالجة...`;
-      }
+    // Create streaming AI response
+    const aiMsgId = `${mode}-ai-${Date.now()}`;
+    let aiContent = "";
 
-      const aiMsg: ChatMessage = {
-        id: `${mode}-ai-${Date.now()}`,
-        role: "ai",
-        text: aiText,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-    }, 800);
-  }, [input, mode, onSendMessage, attachments]);
+    setMessages((prev) => [...prev, {
+      id: aiMsgId,
+      role: "ai",
+      text: "▍",
+      timestamp: new Date(),
+    }]);
+
+    sendAIMessage(aiMessages, {
+      onToken: (token) => {
+        aiContent += token;
+        setMessages((prev) =>
+          prev.map((m) => m.id === aiMsgId ? { ...m, text: aiContent + " ▍" } : m)
+        );
+      },
+      onDone: () => {
+        setMessages((prev) =>
+          prev.map((m) => m.id === aiMsgId ? { ...m, text: aiContent || "✅ تم." } : m)
+        );
+      },
+      onError: (error) => {
+        setMessages((prev) =>
+          prev.map((m) => m.id === aiMsgId ? { ...m, text: `⚠️ ${error}` } : m)
+        );
+      },
+    });
+  }, [input, mode, onSendMessage, attachments, messages]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
