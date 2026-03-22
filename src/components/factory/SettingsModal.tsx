@@ -3,6 +3,7 @@ import { Settings, Moon, Sun, Globe, Paintbrush, BrainCircuit, Eye, EyeOff } fro
 import { usePlatform } from "@/hooks/use-platform";
 import type { VisualStyle } from "@/lib/platform";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
