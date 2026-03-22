@@ -24,9 +24,9 @@ interface FactoryPrefs {
 const loadPrefs = (): FactoryPrefs => {
   try {
     const raw = localStorage.getItem(PREFS_KEY);
-    return raw ? JSON.parse(raw) : { theme: "dark", aiProvider: "built-in" };
+    return raw ? { deepseekKey: "", ...JSON.parse(raw) } : { theme: "dark", aiProvider: "built-in", deepseekKey: "" };
   } catch {
-    return { theme: "dark", aiProvider: "built-in" };
+    return { theme: "dark", aiProvider: "built-in", deepseekKey: "" };
   }
 };
 
