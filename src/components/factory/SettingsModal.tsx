@@ -169,6 +169,19 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
                     {showDeepseekKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                <Button
+                  onClick={() => {
+                    if (prefs.deepseekKey.trim()) {
+                      toast.success("✅ تم تفعيل مفتاح DeepSeek بنجاح");
+                    } else {
+                      toast.error("أدخل المفتاح أولاً");
+                    }
+                  }}
+                  size="sm"
+                  className="w-full sf-gradient-bg text-primary-foreground"
+                >
+                  تفعيل المفتاح
+                </Button>
                 <p className="text-[10px] text-muted-foreground/70">
                   احصل على المفتاح من{" "}
                   <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer" className="underline text-sf-safe">
