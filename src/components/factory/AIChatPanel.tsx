@@ -5,6 +5,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { sendAIMessage, hasActiveAPIKey, getActiveProvider, type AIMessage } from "@/lib/ai-provider";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
