@@ -1,8 +1,9 @@
 import { useState, useCallback } from "react";
-import { Settings, Moon, Sun, Globe, Paintbrush } from "lucide-react";
+import { Settings, Moon, Sun, Globe, Paintbrush, BrainCircuit, Eye, EyeOff } from "lucide-react";
 import { usePlatform } from "@/hooks/use-platform";
 import type { VisualStyle } from "@/lib/platform";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -17,15 +18,16 @@ const PREFS_KEY = "sirou_factory_prefs";
 
 interface FactoryPrefs {
   theme: "dark" | "light" | "system";
-  aiProvider: "built-in" | "openai" | "anthropic";
+  aiProvider: "built-in" | "openai" | "anthropic" | "deepseek";
+  deepseekKey: string;
 }
 
 const loadPrefs = (): FactoryPrefs => {
   try {
     const raw = localStorage.getItem(PREFS_KEY);
-    return raw ? JSON.parse(raw) : { theme: "dark", aiProvider: "built-in" };
+    return raw ? { deepseekKey: "", ...JSON.parse(raw) } : { theme: "dark", aiProvider: "built-in", deepseekKey: "" };
   } catch {
-    return { theme: "dark", aiProvider: "built-in" };
+    return { theme: "dark", aiProvider: "built-in", deepseekKey: "" };
   }
 };
 
@@ -76,7 +78,15 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
     { value: "built-in", label: t("settings.ai.builtin") },
     { value: "openai", label: "OpenAI" },
     { value: "anthropic", label: "Anthropic" },
+    { value: "deepseek", label: "DeepSeek" },
   ];
+
+  const [showDeepseekKey, setShowDeepseekKey] = useState(false);
+
+  const handleDeepseekKeyChange = useCallback((key: string) => {
+    const updated = { ...prefs, deepseekKey: key };
+    save(updated);
+  }, [prefs, save]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -118,7 +128,7 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
           {/* AI Provider */}
           <div>
             <p className="text-sm font-medium text-foreground mb-2">{t("settings.ai")}</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {aiProviders.map(({ value, label }) => (
                 <Button
                   key={value}
@@ -135,6 +145,38 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
                 </Button>
               ))}
             </div>
+
+            {/* DeepSeek API Key */}
+            {prefs.aiProvider === "deepseek" && (
+              <div className="mt-3 space-y-2">
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <BrainCircuit className="h-3.5 w-3.5" />
+                  DeepSeek API Key
+                </p>
+                <div className="relative">
+                  <Input
+                    type={showDeepseekKey ? "text" : "password"}
+                    value={prefs.deepseekKey}
+                    onChange={(e) => handleDeepseekKeyChange(e.target.value)}
+                    placeholder="sk-..."
+                    className="sf-glass-subtle border-foreground/20 text-foreground placeholder:text-muted-foreground pe-10 font-mono text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDeepseekKey(!showDeepseekKey)}
+                    className="absolute end-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showDeepseekKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-muted-foreground/70">
+                  احصل على المفتاح من{" "}
+                  <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer" className="underline text-sf-safe">
+                    platform.deepseek.com
+                  </a>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Visual Style */}
