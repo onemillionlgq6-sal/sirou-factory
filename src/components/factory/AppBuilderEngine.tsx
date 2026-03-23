@@ -17,6 +17,8 @@ const AppBuilderEngine = ({ blueprint, onComplete }: AppBuilderEngineProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [generatedActions, setGeneratedActions] = useState<ValidatedAction[]>([]);
+  const [buildExecuted, setBuildExecuted] = useState(false);
 
   const approvedFeatures = useMemo(
     () => blueprint.features.filter((f) => f.approved),
