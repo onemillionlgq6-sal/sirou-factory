@@ -164,7 +164,7 @@ function generateAppEntry(bp: AppBlueprint): string {
 }
 
 function generateStyles(bp: AppBlueprint): string {
-  const primary = bp.theme?.colors?.primary || "#D4AF37";
-  const bg = bp.theme?.colors?.background || "#0A0A0F";
+  const primary = bp.theme?.primary || "#D4AF37";
+  const bg = bp.theme?.background || "#0A0A0F";
   return `/* ${bp.appName} — Auto-generated styles */\n\n.app-${slug(bp.appName)} {\n  --app-primary: ${primary};\n  --app-background: ${bg};\n}\n`;
 }
