@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Hammer, CheckCircle2, Loader2, Shield, Package, Sparkles, Lightbulb, ChevronRight } from "lucide-react";
+import { Hammer, CheckCircle2, Loader2, Shield, Package, Sparkles, Lightbulb, ChevronRight, Terminal } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 import type { AppBlueprint } from "./AIPlannerEngine";
+import { blueprintToActions, type ValidatedAction, type ExecutionResult, executeBatch } from "@/lib/executor";
+import ExecutorPanel from "./ExecutorPanel";
 
 interface AppBuilderEngineProps {
   blueprint: AppBlueprint;
