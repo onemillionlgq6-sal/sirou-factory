@@ -50,6 +50,10 @@ const AppBuilderEngine = ({ blueprint, onComplete }: AppBuilderEngineProps) => {
       }
       if (!cancelled) {
         setIsComplete(true);
+        // Generate executable actions from blueprint
+        const actions = blueprintToActions(blueprint);
+        setGeneratedActions(actions);
+        toast.success(`🔧 تم توليد ${actions.length} أمر تنفيذي من المخطط`);
         // Show suggestions after a brief pause
         setTimeout(() => setShowSuggestions(true), 800);
         onComplete();
