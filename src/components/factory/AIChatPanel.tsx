@@ -2,10 +2,13 @@
  * AIChatPanel — Persistent AI communication input.
  * Two modes: "app" (for app generation with image attachments) and "factory" (for factory development).
  * Each mode maintains its own independent message history.
+ * Integrates with Executor Layer for actionable AI responses.
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { sendAIMessage, hasActiveAPIKey, getActiveProvider, type AIMessage } from "@/lib/ai-provider";
+import { parseAIResponse, type ValidatedAction } from "@/lib/executor";
+import ExecutorPanel from "@/components/factory/ExecutorPanel";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
@@ -74,6 +77,7 @@ const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) =>
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [attachments, setAttachments] = useState<ImageAttachment[]>([]);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [pendingActions, setPendingActions] = useState<ValidatedAction[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -188,6 +192,14 @@ const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) =>
         setMessages((prev) =>
           prev.map((m) => m.id === aiMsgId ? { ...m, text: aiContent || "✅ تم." } : m)
         );
+        // Parse AI response for executable actions
+        if (aiContent) {
+          const parsed = parseAIResponse(aiContent);
+          if (parsed.actions.length > 0) {
+            setPendingActions(parsed.actions);
+            toast.success(`🔧 تم اكتشاف ${parsed.actions.length} أمر قابل للتنفيذ`);
+          }
+        }
       },
       onError: (error) => {
         setMessages((prev) =>
@@ -340,6 +352,25 @@ const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) =>
                 ))}
                 <div ref={messagesEndRef} />
               </div>
+
+              {/* Executor Panel — shows parsed actions */}
+              {pendingActions.length > 0 && (
+                <div className="px-3 py-2">
+                  <ExecutorPanel
+                    actions={pendingActions}
+                    onExecutionComplete={(results) => {
+                      const summary = results.map(r => r.message).join("\n");
+                      setMessages(prev => [...prev, {
+                        id: `${mode}-exec-${Date.now()}`,
+                        role: "ai",
+                        text: `📋 نتائج التنفيذ:\n${summary}`,
+                        timestamp: new Date(),
+                      }]);
+                    }}
+                    onClear={() => setPendingActions([])}
+                  />
+                </div>
+              )}
 
               {/* Attachment Preview Strip */}
               <AnimatePresence>
