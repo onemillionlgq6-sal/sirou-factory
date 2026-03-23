@@ -77,6 +77,7 @@ const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) =>
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [attachments, setAttachments] = useState<ImageAttachment[]>([]);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [pendingActions, setPendingActions] = useState<ValidatedAction[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
