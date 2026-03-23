@@ -353,6 +353,25 @@ const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) =>
                 <div ref={messagesEndRef} />
               </div>
 
+              {/* Executor Panel — shows parsed actions */}
+              {pendingActions.length > 0 && (
+                <div className="px-3 py-2">
+                  <ExecutorPanel
+                    actions={pendingActions}
+                    onExecutionComplete={(results) => {
+                      const summary = results.map(r => r.message).join("\n");
+                      setMessages(prev => [...prev, {
+                        id: `${mode}-exec-${Date.now()}`,
+                        role: "ai",
+                        text: `📋 نتائج التنفيذ:\n${summary}`,
+                        timestamp: new Date(),
+                      }]);
+                    }}
+                    onClear={() => setPendingActions([])}
+                  />
+                </div>
+              )
+
               {/* Attachment Preview Strip */}
               <AnimatePresence>
                 {attachments.length > 0 && (
