@@ -2,10 +2,13 @@
  * AIChatPanel — Persistent AI communication input.
  * Two modes: "app" (for app generation with image attachments) and "factory" (for factory development).
  * Each mode maintains its own independent message history.
+ * Integrates with Executor Layer for actionable AI responses.
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { sendAIMessage, hasActiveAPIKey, getActiveProvider, type AIMessage } from "@/lib/ai-provider";
+import { parseAIResponse, type ValidatedAction } from "@/lib/executor";
+import ExecutorPanel from "@/components/factory/ExecutorPanel";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
