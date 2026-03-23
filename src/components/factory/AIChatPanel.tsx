@@ -192,6 +192,14 @@ const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) =>
         setMessages((prev) =>
           prev.map((m) => m.id === aiMsgId ? { ...m, text: aiContent || "✅ تم." } : m)
         );
+        // Parse AI response for executable actions
+        if (aiContent) {
+          const parsed = parseAIResponse(aiContent);
+          if (parsed.actions.length > 0) {
+            setPendingActions(parsed.actions);
+            toast.success(`🔧 تم اكتشاف ${parsed.actions.length} أمر قابل للتنفيذ`);
+          }
+        }
       },
       onError: (error) => {
         setMessages((prev) =>
