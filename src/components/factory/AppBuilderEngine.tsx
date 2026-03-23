@@ -146,6 +146,29 @@ const AppBuilderEngine = ({ blueprint, onComplete }: AppBuilderEngineProps) => {
         </motion.div>
       )}
 
+      {/* ─── Executor Panel: Generated Actions ─── */}
+      {isComplete && generatedActions.length > 0 && !buildExecuted && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Terminal className="h-4 w-4 text-amber-400" />
+            <p className="text-sm font-semibold text-foreground">أوامر البناء التنفيذية</p>
+          </div>
+          <ExecutorPanel
+            actions={generatedActions}
+            onExecutionComplete={(results) => {
+              setBuildExecuted(true);
+              const success = results.filter(r => r.status === "success").length;
+              toast.success(`✅ تم تنفيذ ${success}/${results.length} أمر — المشروع جاهز`);
+            }}
+            onClear={() => setGeneratedActions([])}
+          />
+        </motion.div>
+      )}
+
       {/* ─── Proactive Suggestions ─── */}
       <AnimatePresence>
         {showSuggestions && blueprint.suggestions && blueprint.suggestions.length > 0 && (
