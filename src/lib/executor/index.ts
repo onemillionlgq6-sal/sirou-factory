@@ -43,3 +43,5 @@ export {
   parseAIResponse,
   getActionSystemPrompt,
 } from "./ai-action-parser";
+
+export { blueprintToActions } from "./blueprint-converter";

@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Hammer, CheckCircle2, Loader2, Shield, Package, Sparkles, Lightbulb, ChevronRight } from "lucide-react";
+import { Hammer, CheckCircle2, Loader2, Shield, Package, Sparkles, Lightbulb, ChevronRight, Terminal } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 import type { AppBlueprint } from "./AIPlannerEngine";
+import { blueprintToActions, type ValidatedAction, type ExecutionResult, executeBatch } from "@/lib/executor";
+import ExecutorPanel from "./ExecutorPanel";
 
 interface AppBuilderEngineProps {
   blueprint: AppBlueprint;
@@ -15,6 +17,8 @@ const AppBuilderEngine = ({ blueprint, onComplete }: AppBuilderEngineProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [generatedActions, setGeneratedActions] = useState<ValidatedAction[]>([]);
+  const [buildExecuted, setBuildExecuted] = useState(false);
 
   const approvedFeatures = useMemo(
     () => blueprint.features.filter((f) => f.approved),
@@ -46,6 +50,10 @@ const AppBuilderEngine = ({ blueprint, onComplete }: AppBuilderEngineProps) => {
       }
       if (!cancelled) {
         setIsComplete(true);
+        // Generate executable actions from blueprint
+        const actions = blueprintToActions(blueprint);
+        setGeneratedActions(actions);
+        toast.success(`🔧 تم توليد ${actions.length} أمر تنفيذي من المخطط`);
         // Show suggestions after a brief pause
         setTimeout(() => setShowSuggestions(true), 800);
         onComplete();
@@ -135,6 +143,29 @@ const AppBuilderEngine = ({ blueprint, onComplete }: AppBuilderEngineProps) => {
               ))}
             </div>
           )}
+        </motion.div>
+      )}
+
+      {/* ─── Executor Panel: Generated Actions ─── */}
+      {isComplete && generatedActions.length > 0 && !buildExecuted && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Terminal className="h-4 w-4 text-amber-400" />
+            <p className="text-sm font-semibold text-foreground">أوامر البناء التنفيذية</p>
+          </div>
+          <ExecutorPanel
+            actions={generatedActions}
+            onExecutionComplete={(results) => {
+              setBuildExecuted(true);
+              const success = results.filter(r => r.status === "success").length;
+              toast.success(`✅ تم تنفيذ ${success}/${results.length} أمر — المشروع جاهز`);
+            }}
+            onClear={() => setGeneratedActions([])}
+          />
         </motion.div>
       )}
 
