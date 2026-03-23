@@ -370,7 +370,7 @@ const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) =>
                     onClear={() => setPendingActions([])}
                   />
                 </div>
-              )
+              )}
 
               {/* Attachment Preview Strip */}
               <AnimatePresence>
