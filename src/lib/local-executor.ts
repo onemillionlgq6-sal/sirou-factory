@@ -70,16 +70,68 @@ export async function executeLocalBatch(
 }
 
 /**
- * Parse AI response text and auto-execute any JSON actions found
+ * Extract all JSON action objects from AI response text.
+ * Supports: ```json blocks, inline JSON, nested arrays, and { "actions": [...] } wrappers.
+ */
+function extractActions(text: string): Record<string, unknown>[] {
+  const actions: Record<string, unknown>[] = [];
+
+  // 1. Try ```json code blocks first
+  const codeBlockRegex = /```(?:json)?\s*\n?([\s\S]*?)```/g;
+  let match;
+  while ((match = codeBlockRegex.exec(text)) !== null) {
+    try {
+      const parsed = JSON.parse(match[1].trim());
+      if (Array.isArray(parsed)) {
+        for (const item of parsed) {
+          if (item && typeof item === "object" && "action" in item) actions.push(item);
+        }
+      } else if (parsed && typeof parsed === "object") {
+        if ("actions" in parsed && Array.isArray(parsed.actions)) {
+          for (const item of parsed.actions) {
+            if (item && typeof item === "object" && "action" in item) actions.push(item);
+          }
+        } else if ("action" in parsed) {
+          actions.push(parsed);
+        }
+      }
+    } catch { /* skip invalid JSON */ }
+  }
+
+  if (actions.length > 0) return actions;
+
+  // 2. Try inline JSON objects with "action" field
+  const objRegex = /\{[^{}]*"action"\s*:\s*"[^"]+?"[^{}]*\}/g;
+  while ((match = objRegex.exec(text)) !== null) {
+    try {
+      const parsed = JSON.parse(match[0]);
+      if (parsed && "action" in parsed) actions.push(parsed);
+    } catch { /* skip */ }
+  }
+
+  if (actions.length > 0) return actions;
+
+  // 3. Try parsing the entire text
+  try {
+    const parsed = JSON.parse(text.trim());
+    if (Array.isArray(parsed)) {
+      for (const item of parsed) {
+        if (item && typeof item === "object" && "action" in item) actions.push(item);
+      }
+    } else if (parsed && typeof parsed === "object" && "action" in parsed) {
+      actions.push(parsed);
+    }
+  } catch { /* not JSON */ }
+
+  return actions;
+}
+
+/**
+ * Parse AI response text and auto-execute any JSON actions found on the local server.
  */
 export async function handleAIExecution(textResponse: string): Promise<LocalExecutionResult[]> {
-  const results: LocalExecutionResult[] = [];
-
-  // Extract all JSON action blocks
-  const jsonRegex = /\{[\s\S]*?"action"\s*:\s*"[^"]+?"[\s\S]*?\}/g;
-  const matches = textResponse.match(jsonRegex);
-
-  if (!matches || matches.length === 0) return results;
+  const actions = extractActions(textResponse);
+  if (actions.length === 0) return [];
 
   // Check server availability first
   const serverUp = await isLocalServerRunning();
@@ -90,17 +142,13 @@ export async function handleAIExecution(textResponse: string): Promise<LocalExec
     }];
   }
 
-  for (const match of matches) {
-    try {
-      const actionData = JSON.parse(match);
-      if (actionData.action) {
-        const result = await executeLocal(actionData);
-        results.push(result);
-      }
-    } catch {
-      // Skip invalid JSON
-    }
+  // Use batch endpoint for multiple actions
+  if (actions.length > 1) {
+    const batchResult = await executeLocalBatch(actions);
+    return batchResult.results;
   }
 
-  return results;
+  // Single action
+  const result = await executeLocal(actions[0]);
+  return [result];
 }
