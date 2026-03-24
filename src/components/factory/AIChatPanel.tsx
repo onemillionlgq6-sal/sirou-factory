@@ -7,7 +7,8 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { sendAIMessage, hasActiveAPIKey, getActiveProvider, type AIMessage } from "@/lib/ai-provider";
-import { parseAIResponse, type ValidatedAction } from "@/lib/executor";
+import { parseAIResponse, getActionSystemPrompt, type ValidatedAction } from "@/lib/executor";
+import { handleAIExecution, isLocalServerRunning } from "@/lib/local-executor";
 import ExecutorPanel from "@/components/factory/ExecutorPanel";
 import { motion, AnimatePresence } from "framer-motion";
 import {
