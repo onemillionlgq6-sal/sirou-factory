@@ -157,12 +157,13 @@ const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) =>
     onSendMessage?.(text, mode, imageFiles.length > 0 ? imageFiles : undefined);
 
     // Build AI message history
+    const actionPromptSuffix = "\n\nهام: إذا تضمن الطلب إنشاء أو تعديل ملفات، أضف JSON Action في نهاية ردك داخل ```json ... ``` ليتم تنفيذه تلقائياً.";
     const aiMessages: AIMessage[] = [
       {
         role: "system",
         content: mode === "app"
-          ? "أنت مساعد ذكي متخصص في بناء التطبيقات. ساعد المستخدم في تصميم وبناء تطبيقه. أجب بالعربية. كن مختصراً ومفيداً."
-          : "أنت مساعد متخصص في تطوير وتحسين المصنع البرمجي. أجب بالعربية. كن تقنياً ودقيقاً.",
+          ? "أنت مساعد ذكي متخصص في بناء التطبيقات. ساعد المستخدم في تصميم وبناء تطبيقه. أجب بالعربية. كن مختصراً ومفيداً." + actionPromptSuffix
+          : "أنت مساعد متخصص في تطوير وتحسين المصنع البرمجي. أجب بالعربية. كن تقنياً ودقيقاً." + actionPromptSuffix,
       },
       ...messages.filter(m => m.text).map(m => ({
         role: (m.role === "user" ? "user" : "assistant") as AIMessage["role"],
@@ -189,7 +190,7 @@ const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) =>
           prev.map((m) => m.id === aiMsgId ? { ...m, text: aiContent + " ▍" } : m)
         );
       },
-      onDone: () => {
+      onDone: async () => {
         setMessages((prev) =>
           prev.map((m) => m.id === aiMsgId ? { ...m, text: aiContent || "✅ تم." } : m)
         );
@@ -199,6 +200,27 @@ const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) =>
           if (parsed.actions.length > 0) {
             setPendingActions(parsed.actions);
             toast.success(`🔧 تم اكتشاف ${parsed.actions.length} أمر قابل للتنفيذ`);
+          }
+
+          // Auto-execute on local server if running
+          const serverUp = await isLocalServerRunning();
+          if (serverUp) {
+            const localResults = await handleAIExecution(aiContent);
+            if (localResults.length > 0) {
+              const successCount = localResults.filter(r => r.success).length;
+              const failCount = localResults.length - successCount;
+              const summary = localResults.map(r => r.success ? r.message : `❌ ${r.error}`).join("\n");
+              
+              setMessages(prev => [...prev, {
+                id: `${mode}-local-${Date.now()}`,
+                role: "ai",
+                text: `⚡ تنفيذ محلي (${successCount} نجح${failCount > 0 ? ` / ${failCount} فشل` : ""}):\n${summary}`,
+                timestamp: new Date(),
+              }]);
+
+              if (successCount > 0) toast.success(`⚡ تم تنفيذ ${successCount} أمر محلياً`);
+              if (failCount > 0) toast.error(`❌ فشل ${failCount} أمر`);
+            }
           }
         }
       },
