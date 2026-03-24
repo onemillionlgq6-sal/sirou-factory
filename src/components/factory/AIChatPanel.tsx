@@ -157,13 +157,10 @@ const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) =>
     onSendMessage?.(text, mode, imageFiles.length > 0 ? imageFiles : undefined);
 
     // Build AI message history
-    const actionPromptSuffix = "\n\nهام: إذا تضمن الطلب إنشاء أو تعديل ملفات، أضف JSON Action في نهاية ردك داخل ```json ... ``` ليتم تنفيذه تلقائياً.";
     const aiMessages: AIMessage[] = [
       {
         role: "system",
-        content: mode === "app"
-          ? "أنت مساعد ذكي متخصص في بناء التطبيقات. ساعد المستخدم في تصميم وبناء تطبيقه. أجب بالعربية. كن مختصراً ومفيداً." + actionPromptSuffix
-          : "أنت مساعد متخصص في تطوير وتحسين المصنع البرمجي. أجب بالعربية. كن تقنياً ودقيقاً." + actionPromptSuffix,
+        content: getActionSystemPrompt(),
       },
       ...messages.filter(m => m.text).map(m => ({
         role: (m.role === "user" ? "user" : "assistant") as AIMessage["role"],

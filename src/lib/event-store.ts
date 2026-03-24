@@ -123,7 +123,13 @@ export async function appendEvent<T = unknown>(
     entity_id: opts?.entity_id,
   };
 
-  const encrypted_payload = await encryptPayload(payload);
+  let encrypted_payload: string;
+  try {
+    encrypted_payload = await encryptPayload(payload);
+  } catch {
+    // No encryption key set — store as plain JSON (non-sensitive executor logs)
+    encrypted_payload = JSON.stringify(payload);
+  }
 
   const stored: StoredEvent = {
     event_id: event.event_id,
