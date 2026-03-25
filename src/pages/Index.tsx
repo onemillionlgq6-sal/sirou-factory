@@ -57,11 +57,16 @@ const Index = () => {
             />
             {serverOnline ? "Executor Online" : "Executor Offline"}
           </div>
-          <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-[hsl(220,20%,14%)] transition-colors">
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-[hsl(220,20%,14%)] transition-colors"
+          >
             <Settings className="h-4 w-4" />
           </button>
         </div>
       </header>
+
+      <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
 
       {/* ─── Main Content ─── */}
       <div className="flex-1 overflow-hidden">
