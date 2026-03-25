@@ -4,6 +4,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import AIChatPanel from "@/components/factory/AIChatPanel";
 import PreviewPanel from "@/components/factory/PreviewPanel";
 import SovereignIcon from "@/components/factory/SovereignIcon";
+import SettingsModal from "@/components/factory/SettingsModal";
 import { toast } from "sonner";
 import { initGlobalErrorHandlers } from "@/lib/health-monitor";
 import { isLocalServerRunning } from "@/lib/local-executor";
@@ -12,6 +13,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [serverOnline, setServerOnline] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     initGlobalErrorHandlers();
