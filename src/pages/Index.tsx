@@ -14,6 +14,7 @@ const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [serverOnline, setServerOnline] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [generatedFiles, setGeneratedFiles] = useState<Record<string, string>>({});
 
   useEffect(() => {
     initGlobalErrorHandlers();
@@ -80,6 +81,7 @@ const Index = () => {
                     <AIChatPanel
                       mode="app"
                       onSendMessage={(msg) => handleAppAIMessage(msg)}
+                      onFilesGenerated={(files) => setGeneratedFiles(prev => ({ ...prev, ...files }))}
                     />
                   </ErrorBoundary>
                 </div>
@@ -91,7 +93,7 @@ const Index = () => {
           {/* Right: Preview */}
           <ResizablePanel defaultSize={sidebarOpen ? 70 : 100}>
             <ErrorBoundary moduleName="PreviewPanel" fallbackTitleAr="خطأ في المعاينة">
-              <PreviewPanel />
+              <PreviewPanel generatedFiles={generatedFiles} />
             </ErrorBoundary>
           </ResizablePanel>
         </ResizablePanelGroup>
