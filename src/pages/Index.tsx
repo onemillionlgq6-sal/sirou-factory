@@ -1,208 +1,93 @@
 import { useState, useCallback, useEffect } from "react";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import FactoryHeader from "@/components/factory/FactoryHeader";
-import TemplatesLauncher from "@/components/factory/TemplatesLauncher";
-import SovereignCoreLauncher from "@/components/factory/SovereignCoreLauncher";
+import { PanelLeftClose, PanelLeftOpen, Settings, Zap } from "lucide-react";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import PipelineIndicator from "@/components/factory/PipelineIndicator";
-import LeftColumn from "@/components/factory/LeftColumn";
-import RightColumn from "@/components/factory/RightColumn";
 import AIChatPanel from "@/components/factory/AIChatPanel";
-import type { Phase } from "@/components/factory/PipelineIndicator";
-import type { ActionNotification } from "@/components/factory/TransparencyCenter";
-import type { AppBlueprint } from "@/components/factory/AIPlannerEngine";
+import PreviewPanel from "@/components/factory/PreviewPanel";
+import SovereignIcon from "@/components/factory/SovereignIcon";
 import { toast } from "sonner";
-import { getStoredCredentials } from "@/lib/supabase";
-import { useI18n } from "@/lib/i18n";
 import { initGlobalErrorHandlers } from "@/lib/health-monitor";
-import factoryBg from "@/assets/factory-bg.jpg";
+import { isLocalServerRunning } from "@/lib/local-executor";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 const Index = () => {
-  const { t } = useI18n();
-  const [notifications, setNotifications] = useState<ActionNotification[]>([]);
-  const [phase, setPhase] = useState<Phase>("idea");
-  const [idea, setIdea] = useState("");
-  const [isPlanning, setIsPlanning] = useState(false);
-  const [blueprint, setBlueprint] = useState<AppBlueprint | null>(null);
-  const [appName, setAppName] = useState("");
-  const [isBackendConnected, setIsBackendConnected] = useState(
-    () => !!getStoredCredentials()
-  );
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [serverOnline, setServerOnline] = useState(false);
 
-  useEffect(() => { initGlobalErrorHandlers(); }, []);
-
-  const handleGenerate = useCallback((ideaText: string) => {
-    setIdea(ideaText);
-    setAppName(ideaText.split(" ").slice(0, 4).join(" "));
-    setPhase("planning");
+  useEffect(() => {
+    initGlobalErrorHandlers();
+    isLocalServerRunning().then(setServerOnline);
   }, []);
 
   const handleAppAIMessage = useCallback((message: string) => {
-    // If in idea phase, treat as a generation request
-    if (phase === "idea") {
-      handleGenerate(message);
-    } else {
-      toast.success("📝 تم تسجيل التعديل — جاري التطبيق...");
-    }
-  }, [phase, handleGenerate]);
-
-  const handleFactoryAIMessage = useCallback((message: string) => {
-    toast.success("🔧 طلب تطوير المصنع مسجل — جاري المعالجة...");
+    toast.success("📝 جاري التنفيذ...");
   }, []);
-
-  const handleBlueprintReady = useCallback((bp: AppBlueprint) => {
-    setBlueprint(bp);
-    setPhase("blueprint");
-    const notifs: ActionNotification[] = bp.features.map((f, i) => ({
-      id: String(i + 1), level: f.risk, title: f.name,
-      description: f.category === "external" ? t("plan.api.desc")
-        : f.category === "plugin" ? t("plan.db.desc") : t("plan.tailwind.desc"),
-      approved: f.risk === "safe" ? true : undefined, timestamp: new Date(),
-    }));
-    setNotifications(notifs);
-    toast.success(t("toast.plan.generated"));
-  }, [t]);
-
-  const handleBlueprintApprove = useCallback((bp: AppBlueprint) => {
-    setBlueprint(bp);
-    setPhase("building");
-    setNotifications((prev) =>
-      prev.map((n) => {
-        const feature = bp.features.find((f) => f.name === n.title);
-        if (feature?.approved) return { ...n, approved: true };
-        if (feature && !feature.approved) return { ...n, approved: false };
-        return n;
-      })
-    );
-    toast.success(t("blueprint.building"));
-  }, [t]);
-
-  const handleBlueprintReject = useCallback(() => {
-    setPhase("idea"); setBlueprint(null); setNotifications([]);
-    toast(t("blueprint.rejected"));
-  }, [t]);
-
-  const handleBuildComplete = useCallback(() => {
-    setPhase("audit");
-    toast.success(t("toast.published"));
-  }, [t]);
-
-  const handleAuditProceed = useCallback(() => {
-    setPhase("complete");
-    toast.success("✅ App passed Quality Gate — ready to export!");
-  }, []);
-
-  const handleAuditRefine = useCallback(() => {
-    setPhase("idea");
-    setBlueprint(null);
-    setNotifications([]);
-    toast("🔧 Returning to design mode for refinements...");
-  }, []);
-
-  const handleApprove = useCallback((id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, approved: true } : n)));
-    toast.success(t("toast.approved"));
-  }, [t]);
-
-  const handleReject = useCallback((id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, approved: false } : n)));
-    toast(t("toast.rejected"));
-  }, [t]);
-
-  const handlePublish = useCallback(() => {
-    const pending = notifications.filter((n) => n.level !== "safe" && n.approved === undefined);
-    if (pending.length > 0) { toast.error(`${pending.length} ${t("toast.pending")}`); return; }
-    toast.success(t("toast.published"));
-  }, [notifications, t]);
-
-  const handleExport = useCallback(() => { toast.success(t("toast.exported")); }, [t]);
 
   return (
-    <div className="h-screen flex bg-cover bg-center bg-fixed overflow-hidden" style={{ backgroundImage: `url(${factoryBg})` }}>
-      <div className="h-screen flex w-full bg-black/30 backdrop-blur-[2px]">
-        {/* ─── LEFT SIDEBAR: AI Chat (collapsible) ─── */}
-        <aside
-          className={`h-screen flex flex-col border-e border-border/30 bg-background/80 backdrop-blur-md z-20 transition-all duration-300 ${
-            sidebarOpen ? "w-1/4 min-w-[280px] max-w-[360px]" : "w-12"
-          }`}
-        >
-          {/* Toggle button */}
+    <div className="h-screen flex flex-col bg-[hsl(220,25%,6%)] text-foreground overflow-hidden">
+      {/* ─── Top Bar ─── */}
+      <header className="flex items-center justify-between h-11 px-3 border-b border-border/20 bg-[hsl(220,20%,8%)] flex-shrink-0">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="flex items-center justify-center h-10 shrink-0 border-b border-border/30 text-muted-foreground hover:text-foreground hover:bg-accent/10 transition-colors"
-            title={sidebarOpen ? "طي الشريط" : "فتح الشريط"}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-[hsl(220,20%,14%)] transition-colors"
           >
             {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
           </button>
+          <div className="flex items-center gap-2" dir="ltr">
+            <SovereignIcon size="sm" glowing />
+            <span
+              className="text-sm font-bold tracking-wide text-foreground"
+              style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
+            >
+              Sirou Factory
+            </span>
+          </div>
+        </div>
 
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <div
+              className={`w-1.5 h-1.5 rounded-full ${
+                serverOnline
+                  ? "bg-emerald-400 shadow-[0_0_4px_hsl(142,60%,50%)]"
+                  : "bg-red-400"
+              }`}
+            />
+            {serverOnline ? "Executor Online" : "Executor Offline"}
+          </div>
+          <button className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-[hsl(220,20%,14%)] transition-colors">
+            <Settings className="h-4 w-4" />
+          </button>
+        </div>
+      </header>
+
+      {/* ─── Main Content ─── */}
+      <div className="flex-1 overflow-hidden">
+        <ResizablePanelGroup direction="horizontal">
+          {/* Left: AI Chat */}
           {sidebarOpen && (
             <>
-              {/* App AI Chat */}
-              <div className="flex-1 overflow-y-auto">
-                <ErrorBoundary moduleName="AIChatApp" fallbackTitleAr="خطأ في محادثة التطبيق">
-                  <AIChatPanel
-                    mode="app"
-                    onSendMessage={(msg) => handleAppAIMessage(msg)}
-                    isGenerating={isPlanning}
-                  />
-                </ErrorBoundary>
-              </div>
-
-              {/* Factory AI Chat */}
-              <div className="border-t border-border/30">
-                <ErrorBoundary moduleName="AIChatFactory" fallbackTitleAr="خطأ في محادثة المصنع">
-                  <AIChatPanel
-                    mode="factory"
-                    onSendMessage={(msg) => handleFactoryAIMessage(msg)}
-                  />
-                </ErrorBoundary>
-              </div>
+              <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+                <div className="h-full flex flex-col bg-[hsl(220,20%,8%)]">
+                  <ErrorBoundary moduleName="AIChatApp" fallbackTitleAr="خطأ في المحادثة">
+                    <AIChatPanel
+                      mode="app"
+                      onSendMessage={(msg) => handleAppAIMessage(msg)}
+                    />
+                  </ErrorBoundary>
+                </div>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
             </>
           )}
-        </aside>
 
-        {/* ─── RIGHT PANEL: Preview & Tools (75%) ─── */}
-        <main className="flex-1 h-screen overflow-y-auto">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <FactoryHeader isBackendConnected={isBackendConnected} />
-            <PipelineIndicator currentPhase={phase} />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
-              <LeftColumn
-                phase={phase} idea={idea} isPlanning={isPlanning}
-                setIsPlanning={setIsPlanning} blueprint={blueprint}
-                notifications={notifications} appName={appName}
-                onGenerate={handleGenerate}
-                onBlueprintReady={handleBlueprintReady}
-                onBlueprintApprove={handleBlueprintApprove}
-                onBlueprintReject={handleBlueprintReject}
-                onBuildComplete={handleBuildComplete}
-                onAuditProceed={handleAuditProceed}
-                onAuditRefine={handleAuditRefine}
-                onApprove={handleApprove} onReject={handleReject}
-              />
-              <RightColumn
-                isComplete={phase === "complete" || phase === "audit"} appName={appName}
-                blueprint={blueprint} isBackendConnected={isBackendConnected}
-                onPublish={handlePublish} onExport={handleExport}
-                onBackendConnected={() => setIsBackendConnected(true)}
-                onBackendDisconnected={() => setIsBackendConnected(false)}
-                onAppAIMessage={handleAppAIMessage}
-                isGenerating={isPlanning}
-              />
-            </div>
-
-            <div className="pb-12 space-y-4">
-              <ErrorBoundary moduleName="TemplatesLauncher" fallbackTitleAr="خطأ في قوالب التطبيقات">
-                <TemplatesLauncher />
-              </ErrorBoundary>
-              <ErrorBoundary moduleName="SovereignCoreLauncher" fallbackTitleAr="خطأ في مركز القدرات">
-                <SovereignCoreLauncher />
-              </ErrorBoundary>
-            </div>
-          </div>
-        </main>
+          {/* Right: Preview */}
+          <ResizablePanel defaultSize={sidebarOpen ? 70 : 100}>
+            <ErrorBoundary moduleName="PreviewPanel" fallbackTitleAr="خطأ في المعاينة">
+              <PreviewPanel />
+            </ErrorBoundary>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </div>
   );
