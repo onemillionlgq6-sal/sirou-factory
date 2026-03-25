@@ -145,9 +145,10 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
 
             // Send generated files to preview
             const fileMap: Record<string, string> = {};
-            for (const action of parsed.actions) {
-              if ((action.action === "create_file" || action.action === "update_file" || action.action === "edit_file") && action.path && action.content) {
-                fileMap[action.path] = action.content;
+            for (const act of parsed.actions) {
+              const a = act as any;
+              if (["create_file", "update_file", "edit_file"].includes(a.action) && a.path && a.content) {
+                fileMap[a.path] = a.content;
               }
             }
             if (Object.keys(fileMap).length > 0) {
