@@ -34,13 +34,14 @@ interface ChatMessage {
 interface AIChatPanelProps {
   mode: ChatMode;
   onSendMessage?: (message: string, mode: ChatMode, images?: File[]) => void;
+  onFilesGenerated?: (files: Record<string, string>) => void;
   isGenerating?: boolean;
 }
 
 const MAX_IMAGES = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) => {
+const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AIChatPanelProps) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [attachments, setAttachments] = useState<ImageAttachment[]>([]);
@@ -141,6 +142,17 @@ const AIChatPanel = ({ mode, onSendMessage, isGenerating }: AIChatPanelProps) =>
           if (parsed.actions.length > 0) {
             setPendingActions(parsed.actions);
             toast.success(`🔧 ${parsed.actions.length} أمر قابل للتنفيذ`);
+
+            // Send generated files to preview
+            const fileMap: Record<string, string> = {};
+            for (const action of parsed.actions) {
+              if ((action.action === "create_file" || action.action === "update_file" || action.action === "edit_file") && action.path && action.content) {
+                fileMap[action.path] = action.content;
+              }
+            }
+            if (Object.keys(fileMap).length > 0) {
+              onFilesGenerated?.(fileMap);
+            }
           }
           const serverUp = await isLocalServerRunning();
           if (serverUp) {
