@@ -45,3 +45,8 @@ export {
 } from "./ai-action-parser";
 
 export { blueprintToActions } from "./blueprint-converter";
+
+export {
+  type ValidationResult,
+  validateAIResponse,
+} from "./action-validator";
