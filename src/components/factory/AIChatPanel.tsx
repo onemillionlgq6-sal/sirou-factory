@@ -1,6 +1,7 @@
 /**
- * AIChatPanel — Full-height AI chat for the IDE-style layout.
- * Integrates with Executor Layer for actionable AI responses.
+ * AIChatPanel — Smart Compiler Chat for Sirou Factory.
+ * Converts text descriptions into full React apps via JSON Actions.
+ * Auto-routes pages, live-previews output, and logs all executions.
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
@@ -8,6 +9,7 @@ import { sendAIMessage, hasActiveAPIKey, getActiveProvider, type AIMessage } fro
 import { parseAIResponse, getActionSystemPrompt, type ValidatedAction } from "@/lib/executor";
 import { handleAIExecution, isLocalServerRunning } from "@/lib/local-executor";
 import ExecutorPanel from "@/components/factory/ExecutorPanel";
+import ExecutionLog, { type LogEntry } from "@/components/factory/ExecutionLog";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Bot, Sparkles, X, ImagePlus, Eye, Trash2, Zap,
@@ -41,6 +43,44 @@ interface AIChatPanelProps {
 const MAX_IMAGES = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+/**
+ * Auto-generate route actions for new pages created in src/pages/
+ */
+function generateAutoRouteActions(actions: ValidatedAction[]): { action: string; path: string; search: string; replace: string }[] {
+  const routeActions: { action: string; path: string; search: string; replace: string }[] = [];
+  
+  for (const act of actions) {
+    const a = act.action as any;
+    if (a.action === "create_file" && typeof a.path === "string" && a.path.startsWith("src/pages/")) {
+      const fileName = a.path.split("/").pop()?.replace(/\.(tsx|jsx)$/, "");
+      if (!fileName || ["Index", "NotFound", "SovereignCore", "Templates"].includes(fileName)) continue;
+      
+      const routePath = "/" + fileName.replace(/([A-Z])/g, (m: string, p1: string, offset: number) => 
+        offset > 0 ? `-${p1.toLowerCase()}` : p1.toLowerCase()
+      );
+      
+      const lazyImport = `const ${fileName} = lazy(() => import("./pages/${fileName}.tsx"));`;
+      const routeElement = `              <Route path="${routePath}" element={<${fileName} />} />`;
+      
+      routeActions.push({
+        action: "edit_file",
+        path: "src/App.tsx",
+        search: `const SovereignCore = lazy`,
+        replace: `${lazyImport}\nconst SovereignCore = lazy`,
+      });
+      
+      routeActions.push({
+        action: "edit_file",
+        path: "src/App.tsx",
+        search: `{/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}`,
+        replace: `${routeElement}\n              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}`,
+      });
+    }
+  }
+  
+  return routeActions;
+}
+
 const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AIChatPanelProps) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -48,6 +88,7 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
   const [pendingActions, setPendingActions] = useState<ValidatedAction[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [executionLogs, setExecutionLogs] = useState<LogEntry[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -60,6 +101,14 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
     return () => {
       attachments.forEach((a) => URL.revokeObjectURL(a.preview));
     };
+  }, []);
+
+  const addLog = useCallback((entry: Omit<LogEntry, "id" | "timestamp">) => {
+    setExecutionLogs(prev => [...prev, {
+      ...entry,
+      id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      timestamp: new Date(),
+    }]);
   }, []);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,13 +189,27 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
         if (aiContent) {
           const parsed = parseAIResponse(aiContent);
           if (parsed.actions.length > 0) {
+            // Auto-route: generate route actions for new pages
+            const routeActions = generateAutoRouteActions(parsed.actions);
+            
             setPendingActions(parsed.actions);
-            toast.success(`🔧 ${parsed.actions.length} أمر قابل للتنفيذ`);
+            toast.success(`🔧 ${parsed.actions.length} أمر قابل للتنفيذ${routeActions.length > 0 ? ` + ${routeActions.length} route تلقائي` : ""}`);
+
+            // Log parsed actions
+            for (const act of parsed.actions) {
+              const a = act.action as any;
+              addLog({
+                action: a.action,
+                path: a.path,
+                status: "warning",
+                message: `في الانتظار: ${act.description}`,
+              });
+            }
 
             // Send generated files to preview
             const fileMap: Record<string, string> = {};
             for (const act of parsed.actions) {
-              const a = act as any;
+              const a = act.action as any;
               if (["create_file", "update_file", "edit_file"].includes(a.action) && a.path && a.content) {
                 fileMap[a.path] = a.content;
               }
@@ -155,12 +218,52 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
               onFilesGenerated?.(fileMap);
             }
           }
+
+          // Auto-execute on local server
           const serverUp = await isLocalServerRunning();
           if (serverUp) {
             const localResults = await handleAIExecution(aiContent);
             if (localResults.length > 0) {
               const successCount = localResults.filter(r => r.success).length;
               const failCount = localResults.length - successCount;
+              
+              // Log each result
+              for (const result of localResults) {
+                addLog({
+                  action: "execute",
+                  status: result.success ? "success" : "error",
+                  message: result.success ? (result.message || "تم") : (result.error || "فشل"),
+                });
+              }
+
+              // Auto-execute route actions too
+              if (parsed.actions.length > 0) {
+                const routeActions = generateAutoRouteActions(parsed.actions);
+                for (const ra of routeActions) {
+                  try {
+                    const res = await fetch("http://localhost:3001/execute", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(ra),
+                    });
+                    const result = await res.json();
+                    addLog({
+                      action: "auto-route",
+                      path: ra.path,
+                      status: result.success ? "success" : "error",
+                      message: result.success ? `Route added` : (result.error || "فشل"),
+                    });
+                  } catch {
+                    addLog({
+                      action: "auto-route",
+                      path: ra.path,
+                      status: "error",
+                      message: "فشل إضافة Route تلقائياً",
+                    });
+                  }
+                }
+              }
+
               const summary = localResults.map(r => r.success ? r.message : `❌ ${r.error}`).join("\n");
               setMessages(prev => [...prev, {
                 id: `${mode}-local-${Date.now()}`,
@@ -175,12 +278,13 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
       },
       onError: (error) => {
         setIsSending(false);
+        addLog({ action: "ai-error", status: "error", message: error });
         setMessages((prev) =>
           prev.map((m) => m.id === aiMsgId ? { ...m, text: `⚠️ ${error}` } : m)
         );
       },
     });
-  }, [input, mode, onSendMessage, attachments, messages]);
+  }, [input, mode, onSendMessage, attachments, messages, addLog, onFilesGenerated]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -217,9 +321,9 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
               <Zap className="h-3.5 w-3.5 text-background" />
             </div>
             <div>
-              <span className="text-sm font-semibold text-foreground">Sirou AI</span>
+              <span className="text-sm font-semibold text-foreground">Sirou Compiler</span>
               {isSending && (
-                <span className="ml-2 text-[10px] text-primary animate-pulse">thinking...</span>
+                <span className="ml-2 text-[10px] text-primary animate-pulse">compiling...</span>
               )}
             </div>
           </div>
@@ -240,10 +344,15 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center opacity-60">
               <Bot className="h-12 w-12 text-muted-foreground/30 mb-3" />
-              <p className="text-sm text-muted-foreground">أهلاً بك في Sirou Factory</p>
+              <p className="text-sm text-muted-foreground">Sirou Compiler</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                اكتب وصف التطبيق أو أعطِ أمراً للتنفيذ المباشر
+                صِف تطبيقك وسأحوّله إلى React كامل مباشرة
               </p>
+              <div className="mt-4 space-y-1.5 text-[11px] text-muted-foreground/40">
+                <p>💡 "أنشئ تطبيق مهام بصفحة رئيسية وصفحة إضافة"</p>
+                <p>💡 "أضف صفحة About للمشروع"</p>
+                <p>💡 "عدّل لون الخلفية في الصفحة الرئيسية"</p>
+              </div>
             </div>
           )}
 
@@ -293,6 +402,13 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
             <ExecutorPanel
               actions={pendingActions}
               onExecutionComplete={(results) => {
+                for (const r of results) {
+                  addLog({
+                    action: "manual-exec",
+                    status: r.message?.includes("✅") ? "success" : "error",
+                    message: r.message || "تم",
+                  });
+                }
                 const summary = results.map(r => r.message).join("\n");
                 setMessages(prev => [...prev, {
                   id: `exec-${Date.now()}`,
@@ -305,6 +421,12 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
             />
           </div>
         )}
+
+        {/* Execution Log */}
+        <ExecutionLog
+          logs={executionLogs}
+          onClear={() => setExecutionLogs([])}
+        />
 
         {/* Attachments strip */}
         {attachments.length > 0 && (
@@ -350,7 +472,7 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="اكتب أمراً أو صف تطبيقاً..."
+              placeholder="صِف تطبيقك أو أعطِ أمراً..."
               rows={1}
               className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 resize-none outline-none min-h-[36px] max-h-[120px] py-1.5"
               dir="auto"
