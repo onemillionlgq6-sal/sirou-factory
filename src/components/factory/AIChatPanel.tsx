@@ -1,13 +1,15 @@
 /**
- * AIChatPanel — Smart Compiler Chat for Sirou Factory.
- * Converts text descriptions into full React apps via JSON Actions.
- * Auto-routes pages, live-previews output, and logs all executions.
+ * AIChatPanel — Strict JSON-only Compiler Chat for Sirou Factory.
+ * All AI responses MUST be valid JSON Actions. Non-JSON is rejected.
+ * Preview only updates from validated+executed actions.
+ * Auto-routing only from JSON Actions, not file scanning.
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { sendAIMessage, hasActiveAPIKey, getActiveProvider, type AIMessage } from "@/lib/ai-provider";
-import { parseAIResponse, getActionSystemPrompt, type ValidatedAction } from "@/lib/executor";
-import { handleAIExecution, isLocalServerRunning } from "@/lib/local-executor";
+import { getActionSystemPrompt, type ValidatedAction } from "@/lib/executor";
+import { validateAIResponse } from "@/lib/executor/action-validator";
+import { handleAIExecution, isLocalServerRunning, executeLocal } from "@/lib/local-executor";
 import ExecutorPanel from "@/components/factory/ExecutorPanel";
 import ExecutionLog, { type LogEntry } from "@/components/factory/ExecutionLog";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,31 +46,32 @@ const MAX_IMAGES = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 /**
- * Auto-generate route actions for new pages created in src/pages/
+ * Generate auto-route edit_file actions ONLY from validated JSON Actions
+ * (not from file scanning). Only triggers for create_file actions targeting src/pages/.
  */
-function generateAutoRouteActions(actions: ValidatedAction[]): { action: string; path: string; search: string; replace: string }[] {
-  const routeActions: { action: string; path: string; search: string; replace: string }[] = [];
-  
+function generateAutoRouteActions(actions: ValidatedAction[]): Record<string, unknown>[] {
+  const routeActions: Record<string, unknown>[] = [];
+
   for (const act of actions) {
     const a = act.action as any;
     if (a.action === "create_file" && typeof a.path === "string" && a.path.startsWith("src/pages/")) {
       const fileName = a.path.split("/").pop()?.replace(/\.(tsx|jsx)$/, "");
       if (!fileName || ["Index", "NotFound", "SovereignCore", "Templates"].includes(fileName)) continue;
-      
-      const routePath = "/" + fileName.replace(/([A-Z])/g, (m: string, p1: string, offset: number) => 
+
+      const routePath = "/" + fileName.replace(/([A-Z])/g, (m: string, p1: string, offset: number) =>
         offset > 0 ? `-${p1.toLowerCase()}` : p1.toLowerCase()
       );
-      
+
       const lazyImport = `const ${fileName} = lazy(() => import("./pages/${fileName}.tsx"));`;
       const routeElement = `              <Route path="${routePath}" element={<${fileName} />} />`;
-      
+
       routeActions.push({
         action: "edit_file",
         path: "src/App.tsx",
         search: `const SovereignCore = lazy`,
         replace: `${lazyImport}\nconst SovereignCore = lazy`,
       });
-      
+
       routeActions.push({
         action: "edit_file",
         path: "src/App.tsx",
@@ -77,7 +80,7 @@ function generateAutoRouteActions(actions: ValidatedAction[]): { action: string;
       });
     }
   }
-  
+
   return routeActions;
 }
 
@@ -186,94 +189,129 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
         setMessages((prev) =>
           prev.map((m) => m.id === aiMsgId ? { ...m, text: aiContent || "✅ تم." } : m)
         );
-        if (aiContent) {
-          const parsed = parseAIResponse(aiContent);
-          if (parsed.actions.length > 0) {
-            // Auto-route: generate route actions for new pages
-            const routeActions = generateAutoRouteActions(parsed.actions);
-            
-            setPendingActions(parsed.actions);
-            toast.success(`🔧 ${parsed.actions.length} أمر قابل للتنفيذ${routeActions.length > 0 ? ` + ${routeActions.length} route تلقائي` : ""}`);
 
-            // Log parsed actions
-            for (const act of parsed.actions) {
-              const a = act.action as any;
+        if (!aiContent) return;
+
+        // ── STRICT VALIDATION GATE ──
+        const validation = validateAIResponse(aiContent);
+
+        if (!validation.valid) {
+          // REJECT: Not valid JSON or no valid actions
+          for (const err of validation.errors) {
+            addLog({
+              action: "validation",
+              status: "error",
+              message: `❌ رفض: ${err}`,
+            });
+          }
+          toast.error(`❌ رد AI غير صالح — ${validation.errors.length} خطأ`);
+          setMessages(prev => [...prev, {
+            id: `${mode}-reject-${Date.now()}`,
+            role: "ai",
+            text: `🚫 رد مرفوض — ليس JSON Actions صالح:\n${validation.errors.join("\n")}`,
+            timestamp: new Date(),
+          }]);
+          return; // BLOCK execution entirely
+        }
+
+        // Log validation errors for partial failures
+        for (const err of validation.errors) {
+          addLog({
+            action: "validation",
+            status: "warning",
+            message: `⚠️ ${err}`,
+          });
+        }
+
+        // Set pending actions for executor panel
+        setPendingActions(validation.actions);
+
+        // Generate auto-route actions FROM validated JSON actions only
+        const routeActions = generateAutoRouteActions(validation.actions);
+
+        toast.success(`🔧 ${validation.actions.length} أمر صالح${routeActions.length > 0 ? ` + ${routeActions.length} route تلقائي` : ""}`);
+
+        // Log validated actions
+        for (const act of validation.actions) {
+          addLog({
+            action: (act.action as any).action,
+            path: (act.action as any).path,
+            status: "warning",
+            message: `في الانتظار: ${act.description}`,
+          });
+        }
+
+        // ── AUTO-EXECUTE on local server (only validated actions) ──
+        const serverUp = await isLocalServerRunning();
+        if (serverUp) {
+          // Execute validated actions via local server
+          const actionObjects = validation.actions.map(a => a.action as Record<string, unknown>);
+          const localResults = await Promise.all(actionObjects.map(a => executeLocal(a)));
+
+          const successCount = localResults.filter(r => r.success).length;
+          const failCount = localResults.length - successCount;
+
+          // Log results
+          for (let i = 0; i < localResults.length; i++) {
+            const result = localResults[i];
+            const act = validation.actions[i];
+            addLog({
+              action: (act.action as any).action,
+              path: (act.action as any).path,
+              status: result.success ? "success" : "error",
+              message: result.success ? (result.message || "تم") : (result.error || "فشل"),
+            });
+          }
+
+          // Execute auto-route actions
+          for (const ra of routeActions) {
+            try {
+              const result = await executeLocal(ra);
               addLog({
-                action: a.action,
-                path: a.path,
-                status: "warning",
-                message: `في الانتظار: ${act.description}`,
+                action: "auto-route",
+                path: (ra as any).path,
+                status: result.success ? "success" : "error",
+                message: result.success ? "Route added" : (result.error || "فشل"),
+              });
+            } catch {
+              addLog({
+                action: "auto-route",
+                path: (ra as any).path,
+                status: "error",
+                message: "فشل إضافة Route تلقائياً",
               });
             }
-
-            // Send generated files to preview
-            const fileMap: Record<string, string> = {};
-            for (const act of parsed.actions) {
-              const a = act.action as any;
-              if (["create_file", "update_file", "edit_file"].includes(a.action) && a.path && a.content) {
-                fileMap[a.path] = a.content;
-              }
-            }
-            if (Object.keys(fileMap).length > 0) {
-              onFilesGenerated?.(fileMap);
-            }
           }
 
-          // Auto-execute on local server
-          const serverUp = await isLocalServerRunning();
-          if (serverUp) {
-            const localResults = await handleAIExecution(aiContent);
-            if (localResults.length > 0) {
-              const successCount = localResults.filter(r => r.success).length;
-              const failCount = localResults.length - successCount;
-              
-              // Log each result
-              for (const result of localResults) {
-                addLog({
-                  action: "execute",
-                  status: result.success ? "success" : "error",
-                  message: result.success ? (result.message || "تم") : (result.error || "فشل"),
-                });
-              }
-
-              // Auto-execute route actions too
-              if (parsed.actions.length > 0) {
-                const routeActions = generateAutoRouteActions(parsed.actions);
-                for (const ra of routeActions) {
-                  try {
-                    const res = await fetch("http://localhost:3001/execute", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(ra),
-                    });
-                    const result = await res.json();
-                    addLog({
-                      action: "auto-route",
-                      path: ra.path,
-                      status: result.success ? "success" : "error",
-                      message: result.success ? `Route added` : (result.error || "فشل"),
-                    });
-                  } catch {
-                    addLog({
-                      action: "auto-route",
-                      path: ra.path,
-                      status: "error",
-                      message: "فشل إضافة Route تلقائياً",
-                    });
-                  }
-                }
-              }
-
-              const summary = localResults.map(r => r.success ? r.message : `❌ ${r.error}`).join("\n");
-              setMessages(prev => [...prev, {
-                id: `${mode}-local-${Date.now()}`,
-                role: "ai",
-                text: `⚡ تنفيذ محلي (${successCount} نجح${failCount > 0 ? ` / ${failCount} فشل` : ""}):\n${summary}`,
-                timestamp: new Date(),
-              }]);
-              if (successCount > 0) toast.success(`⚡ تم تنفيذ ${successCount} أمر محلياً`);
+          // ONLY send files to preview AFTER successful execution
+          const fileMap: Record<string, string> = {};
+          for (let i = 0; i < validation.actions.length; i++) {
+            if (!localResults[i].success) continue; // Skip failed actions
+            const a = validation.actions[i].action as any;
+            if (["create_file", "append_file"].includes(a.action) && a.path && a.content) {
+              fileMap[a.path] = a.content;
             }
           }
+          if (Object.keys(fileMap).length > 0) {
+            onFilesGenerated?.(fileMap);
+          }
+
+          const summary = localResults.map((r, i) => {
+            const desc = validation.actions[i]?.description || "";
+            return r.success ? `✅ ${desc}` : `❌ ${r.error}`;
+          }).join("\n");
+
+          setMessages(prev => [...prev, {
+            id: `${mode}-local-${Date.now()}`,
+            role: "ai",
+            text: `⚡ تنفيذ محلي (${successCount} نجح${failCount > 0 ? ` / ${failCount} فشل` : ""}):\n${summary}`,
+            timestamp: new Date(),
+          }]);
+
+          if (successCount > 0) toast.success(`⚡ تم تنفيذ ${successCount} أمر محلياً`);
+        } else {
+          // Server offline — still show pending but don't preview
+          toast.warning("الخادم المحلي غير متاح — الأوامر في الانتظار");
         }
       },
       onError: (error) => {
