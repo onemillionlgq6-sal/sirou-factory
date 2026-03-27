@@ -10,6 +10,7 @@ import { sendAIMessage, hasActiveAPIKey, getActiveProvider, type AIMessage } fro
 import { getActionSystemPrompt, type ValidatedAction } from "@/lib/executor";
 import { validateAIResponse } from "@/lib/executor/action-validator";
 import { handleAIExecution, isLocalServerRunning, executeLocal } from "@/lib/local-executor";
+import { executeAction, loadProjectFS, getProjectFS } from "@/lib/executor/executor-engine";
 import ExecutorPanel from "@/components/factory/ExecutorPanel";
 import ExecutionLog, { type LogEntry } from "@/components/factory/ExecutionLog";
 import { motion, AnimatePresence } from "framer-motion";
