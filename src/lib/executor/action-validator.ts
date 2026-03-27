@@ -62,6 +62,19 @@ function normalizeToArray(parsed: unknown): unknown[] {
 }
 
 /**
+ * Pre-process raw action objects before schema validation.
+ * Auto-stringifies object `content` fields (e.g. JSON files where content is an object).
+ */
+function preProcessAction(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object") return raw;
+  const obj = raw as Record<string, unknown>;
+  if ("content" in obj && obj.content !== null && typeof obj.content === "object") {
+    return { ...obj, content: JSON.stringify(obj.content, null, 2) };
+  }
+  return raw;
+}
+
+/**
  * Validate AI response strictly:
  * 1. Extract JSON (reject if not valid JSON)
  * 2. Normalize to action array
