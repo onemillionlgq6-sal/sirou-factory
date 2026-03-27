@@ -10,6 +10,7 @@ import { sendAIMessage, hasActiveAPIKey, getActiveProvider, type AIMessage } fro
 import { getActionSystemPrompt, type ValidatedAction } from "@/lib/executor";
 import { validateAIResponse } from "@/lib/executor/action-validator";
 import { handleAIExecution, isLocalServerRunning, executeLocal } from "@/lib/local-executor";
+import { executeAction, loadProjectFS, getProjectFS } from "@/lib/executor/executor-engine";
 import ExecutorPanel from "@/components/factory/ExecutorPanel";
 import ExecutionLog, { type LogEntry } from "@/components/factory/ExecutionLog";
 import { motion, AnimatePresence } from "framer-motion";
@@ -310,8 +311,79 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
 
           if (successCount > 0) toast.success(`⚡ تم تنفيذ ${successCount} أمر محلياً`);
         } else {
-          // Server offline — still show pending but don't preview
-          toast.warning("الخادم المحلي غير متاح — الأوامر في الانتظار");
+          // Server offline — use virtual executor engine
+          addLog({ action: "system", status: "warning", message: "الخادم المحلي غير متاح — تنفيذ افتراضي (Virtual FS)" });
+
+          const virtualResults: { success: boolean; desc: string; message: string }[] = [];
+
+          for (const va of validation.actions) {
+            try {
+              const result = await executeAction({ ...va, requiresApproval: false });
+              const success = result.status === "success";
+              virtualResults.push({
+                success,
+                desc: va.description,
+                message: result.message,
+              });
+              addLog({
+                action: (va.action as any).action,
+                path: (va.action as any).path,
+                status: success ? "success" : "error",
+                message: result.message,
+              });
+            } catch (err) {
+              virtualResults.push({
+                success: false,
+                desc: va.description,
+                message: `❌ ${(err as Error).message}`,
+              });
+              addLog({
+                action: (va.action as any).action,
+                path: (va.action as any).path,
+                status: "error",
+                message: (err as Error).message,
+              });
+            }
+          }
+
+          // Execute auto-route actions on virtual FS too
+          for (const ra of routeActions) {
+            try {
+              const raValidated = { action: ra as any, requiresApproval: false, risk: "low" as const, description: "Auto-route" };
+              await executeAction(raValidated);
+              addLog({ action: "auto-route", path: (ra as any).path, status: "success", message: "Route added (virtual)" });
+            } catch {
+              addLog({ action: "auto-route", path: (ra as any).path, status: "error", message: "فشل إضافة Route" });
+            }
+          }
+
+          // Pass ALL successfully created/appended files to preview
+          const fileMap: Record<string, string> = {};
+          for (let i = 0; i < validation.actions.length; i++) {
+            if (!virtualResults[i]?.success) continue;
+            const a = validation.actions[i].action as any;
+            if (["create_file", "append_file"].includes(a.action) && a.path && a.content) {
+              fileMap[a.path] = a.content;
+            }
+          }
+          if (Object.keys(fileMap).length > 0) {
+            onFilesGenerated?.(fileMap);
+          }
+
+          const successCount = virtualResults.filter(r => r.success).length;
+          const failCount = virtualResults.length - successCount;
+          const summary = virtualResults.map(r =>
+            r.success ? `✅ ${r.desc}` : `❌ ${r.message}`
+          ).join("\n");
+
+          setMessages(prev => [...prev, {
+            id: `${mode}-virtual-${Date.now()}`,
+            role: "ai",
+            text: `🖥️ تنفيذ افتراضي (${successCount} نجح${failCount > 0 ? ` / ${failCount} فشل` : ""}):\n${summary}`,
+            timestamp: new Date(),
+          }]);
+
+          if (successCount > 0) toast.success(`🖥️ تم تنفيذ ${successCount} أمر افتراضياً — المعاينة محدّثة`);
         }
       },
       onError: (error) => {
