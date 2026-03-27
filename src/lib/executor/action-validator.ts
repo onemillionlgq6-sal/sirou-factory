@@ -108,7 +108,8 @@ export function validateAIResponse(aiText: string): ValidationResult {
   const errors: string[] = [];
 
   for (let i = 0; i < rawItems.length; i++) {
-    const result = validateAndClassify(rawItems[i]);
+    const processed = preProcessAction(rawItems[i]);
+    const result = validateAndClassify(processed);
     if ("error" in result) {
       errors.push(`أمر #${i + 1}: ${result.error}`);
     } else {
