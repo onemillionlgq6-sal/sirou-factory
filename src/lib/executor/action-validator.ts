@@ -62,6 +62,28 @@ function normalizeToArray(parsed: unknown): unknown[] {
 }
 
 /**
+ * Pre-process raw action objects before schema validation.
+ * - Auto-stringifies object `content` fields (e.g. JSON files where content is an object).
+ * - Maps `update_file` to `create_file` (common AI alias).
+ */
+function preProcessAction(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object") return raw;
+  const obj = { ...(raw as Record<string, unknown>) };
+
+  // Map update_file → create_file (update_file is not in schema but AIs use it)
+  if (obj.action === "update_file") {
+    obj.action = "create_file";
+  }
+
+  // Auto-stringify object content for JSON files
+  if ("content" in obj && obj.content !== null && typeof obj.content === "object") {
+    obj.content = JSON.stringify(obj.content, null, 2);
+  }
+
+  return obj;
+}
+
+/**
  * Validate AI response strictly:
  * 1. Extract JSON (reject if not valid JSON)
  * 2. Normalize to action array
@@ -95,7 +117,8 @@ export function validateAIResponse(aiText: string): ValidationResult {
   const errors: string[] = [];
 
   for (let i = 0; i < rawItems.length; i++) {
-    const result = validateAndClassify(rawItems[i]);
+    const processed = preProcessAction(rawItems[i]);
+    const result = validateAndClassify(processed);
     if ("error" in result) {
       errors.push(`أمر #${i + 1}: ${result.error}`);
     } else {
