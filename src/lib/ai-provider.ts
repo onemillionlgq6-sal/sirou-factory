@@ -137,33 +137,41 @@ async function callDeepSeek(
 }
 
 /**
- * Built-in simulated response (fallback)
+ * Built-in code generator — generates real JSON Actions from descriptions.
+ * No external API needed.
  */
 function callBuiltIn(
   messages: AIMessage[],
   callbacks: AIStreamCallbacks
 ): void {
-  const lastUserMsg = messages.filter(m => m.role === "user").pop()?.content || "";
+  // Lazy import to avoid circular deps
+  import("@/lib/app-generator").then(({ generateAppFromDescription }) => {
+    const lastUserMsg = messages.filter(m => m.role === "user").pop()?.content || "";
 
-  let response: string;
-  if (lastUserMsg.length < 10) {
-    response = "مرحباً! صف لي فكرة التطبيق بالتفصيل وسأساعدك في بنائه. 🚀";
-  } else {
-    response = `✅ تم استلام طلبك. جاري تحليل: "${lastUserMsg.slice(0, 60)}${lastUserMsg.length > 60 ? "..." : ""}"...\n\nسيتم بناء التطبيق مع:\n• واجهة مستخدم احترافية\n• تشفير AES-256\n• نظام صلاحيات\n• دعم الأجهزة`;
-  }
-
-  // Simulate streaming word-by-word
-  const words = response.split(" ");
-  let i = 0;
-  const interval = setInterval(() => {
-    if (i < words.length) {
-      callbacks.onToken((i > 0 ? " " : "") + words[i]);
-      i++;
+    let response: string;
+    if (lastUserMsg.length < 10) {
+      response = "مرحباً! صف لي فكرة التطبيق بالتفصيل وسأحوّلها إلى تطبيق حقيقي. 🚀\n\nجرّب مثلاً:\n• أريد تطبيق دردشة\n• أريد تطبيق توصيل\n• أريد متجر إلكتروني";
     } else {
-      clearInterval(interval);
-      callbacks.onDone();
+      // Generate real JSON Actions from the description
+      response = generateAppFromDescription(lastUserMsg);
     }
-  }, 50);
+
+    // Stream response character by character for smooth UX
+    let i = 0;
+    const chunkSize = 8;
+    const interval = setInterval(() => {
+      if (i < response.length) {
+        const chunk = response.slice(i, i + chunkSize);
+        callbacks.onToken(chunk);
+        i += chunkSize;
+      } else {
+        clearInterval(interval);
+        callbacks.onDone();
+      }
+    }, 10);
+  }).catch(err => {
+    callbacks.onError(`خطأ في المولّد: ${err.message}`);
+  });
 }
 
 /**
