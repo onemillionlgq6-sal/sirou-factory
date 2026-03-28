@@ -7,7 +7,9 @@
 interface GeneratedAction {
   action: string;
   path: string;
-  content: string;
+  content?: string;
+  search?: string;
+  replace?: string;
 }
 
 interface AppTemplate {
