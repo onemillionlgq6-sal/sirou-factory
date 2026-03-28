@@ -4,7 +4,7 @@
  * Nothing passes to executor without validation.
  */
 
-import { ActionSchema, validateAndClassify, type ValidatedAction } from "./action-schema";
+import { validateAndClassify, type ValidatedAction } from "./action-schema";
 
 export interface ValidationResult {
   valid: boolean;
@@ -13,37 +13,139 @@ export interface ValidationResult {
   rawCount: number;
 }
 
+const CODE_BLOCK_REGEX = /```(?:json)?\s*\n?([\s\S]*?)```/gi;
+const TRUNCATION_PATTERNS = [/\.\.\.\s*$/, /…\s*$/, /\[truncated\]/i, /\[continued\]/i];
+
+function sanitizeJSONInput(input: string): string {
+  return input
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    .replace(/,\s*}/g, "}")
+    .replace(/,\s*]/g, "]")
+    .trim();
+}
+
+function tryParseJSON(candidate: string): unknown | null {
+  const trimmed = candidate.trim();
+  if (!trimmed) return null;
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    try {
+      return JSON.parse(sanitizeJSONInput(trimmed));
+    } catch {
+      return null;
+    }
+  }
+}
+
 /**
- * Strictly extract JSON from AI response.
- * ONLY accepts:
- *   1. A ```json code block containing a JSON array or object
- *   2. Raw text that is itself valid JSON
- * Does NOT attempt fuzzy/regex parsing of inline JSON fragments.
+ * Extract a balanced JSON object/array from mixed text while respecting strings/escapes.
+ */
+function extractBalancedJSONSlice(text: string): string | null {
+  const start = text.search(/[\[{]/);
+  if (start === -1) return null;
+
+  let inString = false;
+  let escaped = false;
+  let braces = 0;
+  let brackets = 0;
+
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === "\\") {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (ch === "{") braces++;
+    if (ch === "}") braces--;
+    if (ch === "[") brackets++;
+    if (ch === "]") brackets--;
+
+    if (braces === 0 && brackets === 0) {
+      return text.slice(start, i + 1);
+    }
+  }
+
+  return null;
+}
+
+function detectLikelyTruncation(text: string): boolean {
+  const trimmed = text.trim();
+  const openBraces = (trimmed.match(/{/g) || []).length;
+  const closeBraces = (trimmed.match(/}/g) || []).length;
+  const openBrackets = (trimmed.match(/\[/g) || []).length;
+  const closeBrackets = (trimmed.match(/]/g) || []).length;
+
+  if (openBraces !== closeBraces || openBrackets !== closeBrackets) {
+    return true;
+  }
+
+  return TRUNCATION_PATTERNS.some((pattern) => pattern.test(trimmed));
+}
+
+/**
+ * Robustly extract JSON from AI response:
+ * 1) direct JSON parse
+ * 2) parse all markdown code blocks
+ * 3) extract balanced JSON from mixed text
  */
 function extractStrictJSON(text: string): { parsed: unknown | null; error: string | null } {
-  // 1. Try ```json code block (single block only)
-  const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)```/);
-  if (codeBlockMatch) {
-    try {
-      return { parsed: JSON.parse(codeBlockMatch[1].trim()), error: null };
-    } catch (e) {
-      return { parsed: null, error: `JSON غير صالح داخل كتلة الكود: ${(e as Error).message}` };
+  const raw = text.trim();
+  if (!raw) {
+    return { parsed: null, error: "الرد فارغ من AI" };
+  }
+
+  const direct = tryParseJSON(raw);
+  if (direct !== null) {
+    return { parsed: direct, error: null };
+  }
+
+  let blockMatch: RegExpExecArray | null;
+  while ((blockMatch = CODE_BLOCK_REGEX.exec(raw)) !== null) {
+    const parsedBlock = tryParseJSON(blockMatch[1]);
+    if (parsedBlock !== null) {
+      return { parsed: parsedBlock, error: null };
     }
   }
 
-  // 2. Try parsing the entire trimmed text as JSON
-  const trimmed = text.trim();
-  // Must start with [ or { to be JSON
-  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
-    try {
-      return { parsed: JSON.parse(trimmed), error: null };
-    } catch (e) {
-      return { parsed: null, error: `JSON غير صالح: ${(e as Error).message}` };
+  const withoutCodeFences = raw
+    .replace(/```json\s*/gi, "")
+    .replace(/```\s*/g, "")
+    .trim();
+
+  const balanced = extractBalancedJSONSlice(withoutCodeFences) ?? extractBalancedJSONSlice(raw);
+  if (balanced) {
+    const parsedBalanced = tryParseJSON(balanced);
+    if (parsedBalanced !== null) {
+      return { parsed: parsedBalanced, error: null };
     }
   }
 
-  // 3. Not JSON at all
-  return { parsed: null, error: "الرد لا يحتوي على JSON صالح. يجب أن يكون الرد كتلة ```json أو JSON خام فقط." };
+  if (detectLikelyTruncation(raw)) {
+    return {
+      parsed: null,
+      error: "الرد يبدو مقطوعاً أو غير مكتمل JSON. أعد المحاولة أو اطلب من النموذج رد أقصر.",
+    };
+  }
+
+  return {
+    parsed: null,
+    error: "الرد لا يحتوي على JSON صالح. يجب أن يكون الرد JSON Actions فقط.",
+  };
 }
 
 /**
@@ -53,9 +155,7 @@ function normalizeToArray(parsed: unknown): unknown[] {
   if (Array.isArray(parsed)) return parsed;
   if (parsed && typeof parsed === "object") {
     const obj = parsed as Record<string, unknown>;
-    // Support { "actions": [...] } wrapper
     if ("actions" in obj && Array.isArray(obj.actions)) return obj.actions;
-    // Single action object
     if ("action" in obj) return [obj];
   }
   return [];
@@ -63,20 +163,18 @@ function normalizeToArray(parsed: unknown): unknown[] {
 
 /**
  * Pre-process raw action objects before schema validation.
- * - Auto-stringifies object `content` fields (e.g. JSON files where content is an object).
- * - Maps `update_file` to `create_file` (common AI alias).
  */
 function preProcessAction(raw: unknown): unknown {
   if (!raw || typeof raw !== "object") return raw;
   const obj = { ...(raw as Record<string, unknown>) };
 
-  // Map update_file → create_file (update_file is not in schema but AIs use it)
-  if (obj.action === "update_file") {
+  // Common aliases used by LLMs
+  if (obj.action === "update_file" || obj.action === "write_file") {
     obj.action = "create_file";
   }
 
-  // Auto-stringify object content for JSON files
-  if ("content" in obj && obj.content !== null && typeof obj.content === "object") {
+  // Auto-stringify structured content (JSON objects, arrays, etc.)
+  if ("content" in obj && obj.content !== null && typeof obj.content !== "string") {
     obj.content = JSON.stringify(obj.content, null, 2);
   }
 
