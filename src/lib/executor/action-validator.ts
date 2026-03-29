@@ -15,9 +15,43 @@ export interface ValidationResult {
 
 const CODE_BLOCK_REGEX = /```(?:json)?\s*\n?([\s\S]*?)```/gi;
 const TRUNCATION_PATTERNS = [/\.\.\.\s*$/, /…\s*$/, /\[truncated\]/i, /\[continued\]/i];
+const MAX_JSON_SIZE = 500_000;
 
+/** String-aware sanitizer — never touches content inside quotes */
 function sanitizeJSONInput(input: string): string {
-  return input
+  let result = "";
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        result += ch;
+      } else if (ch === "\\") {
+        escaped = true;
+        result += ch;
+      } else if (ch === '"') {
+        inString = false;
+        result += ch;
+      } else {
+        result += ch;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+      result += ch;
+      continue;
+    }
+
+    result += ch;
+  }
+
+  return result
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
     .replace(/,\s*}/g, "}")
     .replace(/,\s*]/g, "]")
@@ -27,6 +61,11 @@ function sanitizeJSONInput(input: string): string {
 function tryParseJSON(candidate: string): unknown | null {
   const trimmed = candidate.trim();
   if (!trimmed) return null;
+
+  if (trimmed.length > MAX_JSON_SIZE) {
+    console.warn(`[Validator] JSON too large: ${trimmed.length} chars`);
+    return null;
+  }
 
   try {
     return JSON.parse(trimmed);
@@ -97,11 +136,43 @@ function detectLikelyTruncation(text: string): boolean {
   return TRUNCATION_PATTERNS.some((pattern) => pattern.test(trimmed));
 }
 
+/** Attempt to repair truncated JSON by closing open brackets/braces */
+function attemptRepairJSON(text: string): unknown | null {
+  let repaired = text.trim();
+
+  // Remove trailing truncation markers
+  repaired = repaired.replace(/\.\.\.\s*$/, "").replace(/…\s*$/, "");
+
+  // Close unmatched braces
+  const openBraces = (repaired.match(/{/g) || []).length;
+  const closeBraces = (repaired.match(/}/g) || []).length;
+  for (let i = 0; i < openBraces - closeBraces; i++) repaired += "}";
+
+  // Close unmatched brackets
+  const openBrackets = (repaired.match(/\[/g) || []).length;
+  const closeBrackets = (repaired.match(/]/g) || []).length;
+  for (let i = 0; i < openBrackets - closeBrackets; i++) repaired += "]";
+
+  // Close unmatched quotes
+  const quotes = (repaired.match(/"/g) || []).length;
+  if (quotes % 2 !== 0) repaired += '"';
+
+  // Handle dangling key with no value
+  if (repaired.match(/"[^"]*"\s*:\s*$/)) repaired += "null";
+
+  try {
+    return JSON.parse(repaired);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Robustly extract JSON from AI response:
  * 1) direct JSON parse
  * 2) parse all markdown code blocks
  * 3) extract balanced JSON from mixed text
+ * 4) attempt repair if truncated
  */
 function extractStrictJSON(text: string): { parsed: unknown | null; error: string | null } {
   const raw = text.trim();
@@ -136,9 +207,15 @@ function extractStrictJSON(text: string): { parsed: unknown | null; error: strin
   }
 
   if (detectLikelyTruncation(raw)) {
+    const repaired = attemptRepairJSON(raw);
+    if (repaired !== null) {
+      console.warn("[Validator] Repaired truncated JSON successfully");
+      return { parsed: repaired, error: null };
+    }
+
     return {
       parsed: null,
-      error: "الرد يبدو مقطوعاً أو غير مكتمل JSON. أعد المحاولة أو اطلب من النموذج رد أقصر.",
+      error: "الرد مقطوع ولم يُصلح تلقائياً. قسّم الطلب لملفات أصغر.",
     };
   }
 
@@ -168,12 +245,11 @@ function preProcessAction(raw: unknown): unknown {
   if (!raw || typeof raw !== "object") return raw;
   const obj = { ...(raw as Record<string, unknown>) };
 
-  // Common aliases used by LLMs
   if (obj.action === "update_file" || obj.action === "write_file") {
+    console.warn(`⚠️ تحويل '${obj.action}' → 'create_file': ${obj.path}`);
     obj.action = "create_file";
   }
 
-  // Auto-stringify structured content (JSON objects, arrays, etc.)
   if ("content" in obj && obj.content !== null && typeof obj.content !== "string") {
     obj.content = JSON.stringify(obj.content, null, 2);
   }
@@ -182,16 +258,15 @@ function preProcessAction(raw: unknown): unknown {
 }
 
 /**
- * Validate AI response strictly:
- * 1. Extract JSON (reject if not valid JSON)
- * 2. Normalize to action array
- * 3. Validate each action against ActionSchema
- * 4. Return only validated actions + all errors
+ * Validate AI response strictly with logging.
  */
 export function validateAIResponse(aiText: string): ValidationResult {
+  console.log(`[Validator] Input length: ${aiText.length}`);
+
   const { parsed, error } = extractStrictJSON(aiText);
 
   if (error || parsed === null) {
+    console.error(`[Validator] Extraction failed: ${error}`);
     return {
       valid: false,
       actions: [],
@@ -201,6 +276,7 @@ export function validateAIResponse(aiText: string): ValidationResult {
   }
 
   const rawItems = normalizeToArray(parsed);
+  console.log(`[Validator] Found ${rawItems.length} action(s)`);
 
   if (rawItems.length === 0) {
     return {
@@ -218,11 +294,14 @@ export function validateAIResponse(aiText: string): ValidationResult {
     const processed = preProcessAction(rawItems[i]);
     const result = validateAndClassify(processed);
     if ("error" in result) {
+      console.error(`[Validator] Action #${i + 1} rejected: ${result.error}`);
       errors.push(`أمر #${i + 1}: ${result.error}`);
     } else {
       actions.push(result);
     }
   }
+
+  console.log(`[Validator] Result: ${actions.length} valid, ${errors.length} errors`);
 
   return {
     valid: actions.length > 0,
