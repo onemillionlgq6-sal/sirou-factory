@@ -260,7 +260,7 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
           const successCount = localResults.filter(r => r.success).length;
           const failCount = localResults.length - successCount;
 
-          // Log results
+          // Log results with friendly messages
           for (let i = 0; i < localResults.length; i++) {
             const result = localResults[i];
             const act = validation.actions[i];
@@ -268,7 +268,7 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
               action: (act.action as any).action,
               path: (act.action as any).path,
               status: result.success ? "success" : "error",
-              message: result.success ? (result.message || "تم") : (result.error || "فشل"),
+              message: friendlyLogMessage((act.action as any).action, (act.action as any).path, result.message || result.error || "", result.success ? "success" : "error", lang),
             });
           }
 
@@ -280,14 +280,14 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
                 action: "auto-route",
                 path: (ra as any).path,
                 status: result.success ? "success" : "error",
-                message: result.success ? "Route added" : (result.error || "فشل"),
+                message: friendlyLogMessage("auto-route", (ra as any).path, "", result.success ? "success" : "error", lang),
               });
             } catch {
               addLog({
                 action: "auto-route",
                 path: (ra as any).path,
                 status: "error",
-                message: "فشل إضافة Route تلقائياً",
+                message: friendlyLogMessage("auto-route", (ra as any).path, "", "error", lang),
               });
             }
           }
@@ -295,7 +295,7 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
           // ONLY send files to preview AFTER successful execution
           const fileMap: Record<string, string> = {};
           for (let i = 0; i < validation.actions.length; i++) {
-            if (!localResults[i].success) continue; // Skip failed actions
+            if (!localResults[i].success) continue;
             const a = validation.actions[i].action as any;
             if (["create_file", "append_file"].includes(a.action) && a.path && a.content) {
               fileMap[a.path] = a.content;
@@ -305,22 +305,17 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
             onFilesGenerated?.(fileMap);
           }
 
-          const summary = localResults.map((r, i) => {
-            const desc = validation.actions[i]?.description || "";
-            return r.success ? `✅ ${desc}` : `❌ ${r.error}`;
-          }).join("\n");
-
           setMessages(prev => [...prev, {
             id: `${mode}-local-${Date.now()}`,
             role: "ai",
-            text: `⚡ تنفيذ محلي (${successCount} نجح${failCount > 0 ? ` / ${failCount} فشل` : ""}):\n${summary}`,
+            text: friendlyExecutionSummary(successCount, failCount, localResults.length, lang),
             timestamp: new Date(),
           }]);
 
-          if (successCount > 0) toast.success(`⚡ تم تنفيذ ${successCount} أمر محلياً`);
+          if (successCount > 0) toast.success(friendlyToast(`✅ تنفيذ ${successCount} أمر`, lang));
         } else {
           // Server offline — use virtual executor engine
-          addLog({ action: "system", status: "warning", message: "الخادم المحلي غير متاح — تنفيذ افتراضي (Virtual FS)" });
+          addLog({ action: "system", status: "warning", message: lang === "ar" ? "⏳ أُجهِّز البيئة..." : "⏳ Preparing environment..." });
 
           const virtualResults: { success: boolean; desc: string; message: string }[] = [];
 
@@ -328,28 +323,20 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
             try {
               const result = await executeAction({ ...va, requiresApproval: false });
               const success = result.status === "success";
-              virtualResults.push({
-                success,
-                desc: va.description,
-                message: result.message,
-              });
+              virtualResults.push({ success, desc: va.description, message: result.message });
               addLog({
                 action: (va.action as any).action,
                 path: (va.action as any).path,
                 status: success ? "success" : "error",
-                message: result.message,
+                message: friendlyLogMessage((va.action as any).action, (va.action as any).path, result.message, success ? "success" : "error", lang),
               });
             } catch (err) {
-              virtualResults.push({
-                success: false,
-                desc: va.description,
-                message: `❌ ${(err as Error).message}`,
-              });
+              virtualResults.push({ success: false, desc: va.description, message: (err as Error).message });
               addLog({
                 action: (va.action as any).action,
                 path: (va.action as any).path,
                 status: "error",
-                message: (err as Error).message,
+                message: friendlyLogMessage((va.action as any).action, (va.action as any).path, (err as Error).message, "error", lang),
               });
             }
           }
@@ -359,9 +346,9 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
             try {
               const raValidated = { action: ra as any, requiresApproval: false, risk: "low" as const, description: "Auto-route" };
               await executeAction(raValidated);
-              addLog({ action: "auto-route", path: (ra as any).path, status: "success", message: "Route added (virtual)" });
+              addLog({ action: "auto-route", path: (ra as any).path, status: "success", message: friendlyLogMessage("auto-route", (ra as any).path, "", "success", lang) });
             } catch {
-              addLog({ action: "auto-route", path: (ra as any).path, status: "error", message: "فشل إضافة Route" });
+              addLog({ action: "auto-route", path: (ra as any).path, status: "error", message: friendlyLogMessage("auto-route", (ra as any).path, "", "error", lang) });
             }
           }
 
@@ -380,18 +367,15 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
 
           const successCount = virtualResults.filter(r => r.success).length;
           const failCount = virtualResults.length - successCount;
-          const summary = virtualResults.map(r =>
-            r.success ? `✅ ${r.desc}` : `❌ ${r.message}`
-          ).join("\n");
 
           setMessages(prev => [...prev, {
             id: `${mode}-virtual-${Date.now()}`,
             role: "ai",
-            text: `🖥️ تنفيذ افتراضي (${successCount} نجح${failCount > 0 ? ` / ${failCount} فشل` : ""}):\n${summary}`,
+            text: friendlyExecutionSummary(successCount, failCount, virtualResults.length, lang),
             timestamp: new Date(),
           }]);
 
-          if (successCount > 0) toast.success(`🖥️ تم تنفيذ ${successCount} أمر افتراضياً — المعاينة محدّثة`);
+          if (successCount > 0) toast.success(friendlyToast(`✅ تنفيذ ${successCount} أمر`, lang));
         }
       },
       onError: (error) => {
