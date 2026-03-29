@@ -184,15 +184,17 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
     const aiMsgId = `${mode}-ai-${Date.now()}`;
     let aiContent = "";
 
+    // Show friendly "thinking" message instead of raw AI stream
     setMessages((prev) => [...prev, {
-      id: aiMsgId, role: "ai", text: "▍", timestamp: new Date(),
+      id: aiMsgId, role: "ai", text: friendlyStatus("thinking", lang), timestamp: new Date(),
     }]);
 
     sendAIMessage(aiMessages, {
       onToken: (token) => {
         aiContent += token;
+        // Show friendly building status, NOT raw JSON/code
         setMessages((prev) =>
-          prev.map((m) => m.id === aiMsgId ? { ...m, text: aiContent + " ▍" } : m)
+          prev.map((m) => m.id === aiMsgId ? { ...m, text: friendlyStatus("building", lang) + " ⏳" } : m)
         );
       },
       onDone: async () => {
