@@ -19,6 +19,15 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
+import {
+  friendlyLogMessage,
+  friendlyExecutionSummary,
+  friendlyStatus,
+  friendlyToast,
+  progressBar,
+  stepLabel,
+} from "@/lib/friendly-messages";
 
 type ChatMode = "app" | "factory";
 
@@ -86,6 +95,7 @@ function generateAutoRouteActions(actions: ValidatedAction[]): Record<string, un
 }
 
 const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AIChatPanelProps) => {
+  const { lang } = useI18n();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [attachments, setAttachments] = useState<ImageAttachment[]>([]);
