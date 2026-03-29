@@ -423,9 +423,13 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
               <Zap className="h-3.5 w-3.5 text-background" />
             </div>
             <div>
-              <span className="text-sm font-semibold text-foreground">Sirou Compiler</span>
+              <span className="text-sm font-semibold text-foreground">
+                {lang === "ar" ? "مساعد سيرو" : "Sirou Assistant"}
+              </span>
               {isSending && (
-                <span className="ml-2 text-[10px] text-primary animate-pulse">compiling...</span>
+                <span className="ml-2 text-[10px] text-primary animate-pulse">
+                  {lang === "ar" ? "يعمل..." : "working..."}
+                </span>
               )}
             </div>
           </div>
@@ -446,14 +450,16 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center opacity-60">
               <Bot className="h-12 w-12 text-muted-foreground/30 mb-3" />
-              <p className="text-sm text-muted-foreground">Sirou Compiler</p>
+              <p className="text-sm text-muted-foreground">
+                {lang === "ar" ? "مرحبًا! أنا مساعد سيرو 👋" : "Hi! I'm Sirou Assistant 👋"}
+              </p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                صِف تطبيقك وسأحوّله إلى React كامل مباشرة
+                {lang === "ar" ? "صِف لي تطبيقك وسأبنيه لك" : "Describe your app and I'll build it for you"}
               </p>
               <div className="mt-4 space-y-1.5 text-[11px] text-muted-foreground/40">
-                <p>💡 "أنشئ تطبيق مهام بصفحة رئيسية وصفحة إضافة"</p>
-                <p>💡 "أضف صفحة About للمشروع"</p>
-                <p>💡 "عدّل لون الخلفية في الصفحة الرئيسية"</p>
+                <p>💡 {lang === "ar" ? "\"أبغى تطبيق دردشة\"" : "\"I want a chat app\""}</p>
+                <p>💡 {lang === "ar" ? "\"أبغى متجر إلكتروني\"" : "\"I want an online store\""}</p>
+                <p>💡 {lang === "ar" ? "\"أبغى تطبيق مهام\"" : "\"I want a task manager\""}</p>
               </div>
             </div>
           )}
