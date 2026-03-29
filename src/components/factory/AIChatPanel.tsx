@@ -19,6 +19,15 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
+import {
+  friendlyLogMessage,
+  friendlyExecutionSummary,
+  friendlyStatus,
+  friendlyToast,
+  progressBar,
+  stepLabel,
+} from "@/lib/friendly-messages";
 
 type ChatMode = "app" | "factory";
 
@@ -86,6 +95,7 @@ function generateAutoRouteActions(actions: ValidatedAction[]): Record<string, un
 }
 
 const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AIChatPanelProps) => {
+  const { lang } = useI18n();
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [attachments, setAttachments] = useState<ImageAttachment[]>([]);
@@ -174,21 +184,24 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
     const aiMsgId = `${mode}-ai-${Date.now()}`;
     let aiContent = "";
 
+    // Show friendly "thinking" message instead of raw AI stream
     setMessages((prev) => [...prev, {
-      id: aiMsgId, role: "ai", text: "▍", timestamp: new Date(),
+      id: aiMsgId, role: "ai", text: friendlyStatus("thinking", lang), timestamp: new Date(),
     }]);
 
     sendAIMessage(aiMessages, {
       onToken: (token) => {
         aiContent += token;
+        // Show friendly building status, NOT raw JSON/code
         setMessages((prev) =>
-          prev.map((m) => m.id === aiMsgId ? { ...m, text: aiContent + " ▍" } : m)
+          prev.map((m) => m.id === aiMsgId ? { ...m, text: friendlyStatus("building", lang) + " ⏳" } : m)
         );
       },
       onDone: async () => {
         setIsSending(false);
+        // Replace raw AI content with friendly "done" message
         setMessages((prev) =>
-          prev.map((m) => m.id === aiMsgId ? { ...m, text: aiContent || "✅ تم." } : m)
+          prev.map((m) => m.id === aiMsgId ? { ...m, text: friendlyStatus("building", lang) } : m)
         );
 
         if (!aiContent) return;
@@ -197,31 +210,24 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
         const validation = validateAIResponse(aiContent);
 
         if (!validation.valid) {
-          // REJECT: Not valid JSON or no valid actions
+          // Show friendly error instead of technical JSON errors
           for (const err of validation.errors) {
             addLog({
               action: "validation",
               status: "error",
-              message: `❌ رفض: ${err}`,
+              message: friendlyLogMessage("validation", undefined, err, "error", lang),
             });
           }
-          toast.error(`❌ رد AI غير صالح — ${validation.errors.length} خطأ`);
+          toast.error(lang === "ar" ? "⏳ أُعالج الطلب... حاول مرة أخرى" : "⏳ Processing... please try again");
           setMessages(prev => [...prev, {
             id: `${mode}-reject-${Date.now()}`,
             role: "ai",
-            text: `🚫 رد مرفوض — ليس JSON Actions صالح:\n${validation.errors.join("\n")}`,
+            text: lang === "ar"
+              ? "⚠️ لم أستطع فهم الطلب بالكامل. حاول وصف تطبيقك بطريقة أبسط أو أقصر."
+              : "⚠️ I couldn't fully understand the request. Try describing your app more simply.",
             timestamp: new Date(),
           }]);
-          return; // BLOCK execution entirely
-        }
-
-        // Log validation errors for partial failures
-        for (const err of validation.errors) {
-          addLog({
-            action: "validation",
-            status: "warning",
-            message: `⚠️ ${err}`,
-          });
+          return;
         }
 
         // Set pending actions for executor panel
@@ -230,15 +236,17 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
         // Generate auto-route actions FROM validated JSON actions only
         const routeActions = generateAutoRouteActions(validation.actions);
 
-        toast.success(`🔧 ${validation.actions.length} أمر صالح${routeActions.length > 0 ? ` + ${routeActions.length} route تلقائي` : ""}`);
+        const totalSteps = validation.actions.length;
+        toast.success(friendlyToast(`⚡ ${totalSteps} أمر صالح`, lang));
 
-        // Log validated actions
-        for (const act of validation.actions) {
+        // Log validated actions with friendly messages
+        for (let idx = 0; idx < validation.actions.length; idx++) {
+          const act = validation.actions[idx];
           addLog({
             action: (act.action as any).action,
             path: (act.action as any).path,
             status: "warning",
-            message: `في الانتظار: ${act.description}`,
+            message: `${stepLabel(idx + 1, totalSteps, lang)} — ${friendlyLogMessage((act.action as any).action, (act.action as any).path, "", "warning", lang)}`,
           });
         }
 
@@ -252,7 +260,7 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
           const successCount = localResults.filter(r => r.success).length;
           const failCount = localResults.length - successCount;
 
-          // Log results
+          // Log results with friendly messages
           for (let i = 0; i < localResults.length; i++) {
             const result = localResults[i];
             const act = validation.actions[i];
@@ -260,7 +268,7 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
               action: (act.action as any).action,
               path: (act.action as any).path,
               status: result.success ? "success" : "error",
-              message: result.success ? (result.message || "تم") : (result.error || "فشل"),
+              message: friendlyLogMessage((act.action as any).action, (act.action as any).path, result.message || result.error || "", result.success ? "success" : "error", lang),
             });
           }
 
@@ -272,14 +280,14 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
                 action: "auto-route",
                 path: (ra as any).path,
                 status: result.success ? "success" : "error",
-                message: result.success ? "Route added" : (result.error || "فشل"),
+                message: friendlyLogMessage("auto-route", (ra as any).path, "", result.success ? "success" : "error", lang),
               });
             } catch {
               addLog({
                 action: "auto-route",
                 path: (ra as any).path,
                 status: "error",
-                message: "فشل إضافة Route تلقائياً",
+                message: friendlyLogMessage("auto-route", (ra as any).path, "", "error", lang),
               });
             }
           }
@@ -287,7 +295,7 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
           // ONLY send files to preview AFTER successful execution
           const fileMap: Record<string, string> = {};
           for (let i = 0; i < validation.actions.length; i++) {
-            if (!localResults[i].success) continue; // Skip failed actions
+            if (!localResults[i].success) continue;
             const a = validation.actions[i].action as any;
             if (["create_file", "append_file"].includes(a.action) && a.path && a.content) {
               fileMap[a.path] = a.content;
@@ -297,22 +305,17 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
             onFilesGenerated?.(fileMap);
           }
 
-          const summary = localResults.map((r, i) => {
-            const desc = validation.actions[i]?.description || "";
-            return r.success ? `✅ ${desc}` : `❌ ${r.error}`;
-          }).join("\n");
-
           setMessages(prev => [...prev, {
             id: `${mode}-local-${Date.now()}`,
             role: "ai",
-            text: `⚡ تنفيذ محلي (${successCount} نجح${failCount > 0 ? ` / ${failCount} فشل` : ""}):\n${summary}`,
+            text: friendlyExecutionSummary(successCount, failCount, localResults.length, lang),
             timestamp: new Date(),
           }]);
 
-          if (successCount > 0) toast.success(`⚡ تم تنفيذ ${successCount} أمر محلياً`);
+          if (successCount > 0) toast.success(friendlyToast(`✅ تنفيذ ${successCount} أمر`, lang));
         } else {
           // Server offline — use virtual executor engine
-          addLog({ action: "system", status: "warning", message: "الخادم المحلي غير متاح — تنفيذ افتراضي (Virtual FS)" });
+          addLog({ action: "system", status: "warning", message: lang === "ar" ? "⏳ أُجهِّز البيئة..." : "⏳ Preparing environment..." });
 
           const virtualResults: { success: boolean; desc: string; message: string }[] = [];
 
@@ -320,28 +323,20 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
             try {
               const result = await executeAction({ ...va, requiresApproval: false });
               const success = result.status === "success";
-              virtualResults.push({
-                success,
-                desc: va.description,
-                message: result.message,
-              });
+              virtualResults.push({ success, desc: va.description, message: result.message });
               addLog({
                 action: (va.action as any).action,
                 path: (va.action as any).path,
                 status: success ? "success" : "error",
-                message: result.message,
+                message: friendlyLogMessage((va.action as any).action, (va.action as any).path, result.message, success ? "success" : "error", lang),
               });
             } catch (err) {
-              virtualResults.push({
-                success: false,
-                desc: va.description,
-                message: `❌ ${(err as Error).message}`,
-              });
+              virtualResults.push({ success: false, desc: va.description, message: (err as Error).message });
               addLog({
                 action: (va.action as any).action,
                 path: (va.action as any).path,
                 status: "error",
-                message: (err as Error).message,
+                message: friendlyLogMessage((va.action as any).action, (va.action as any).path, (err as Error).message, "error", lang),
               });
             }
           }
@@ -351,9 +346,9 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
             try {
               const raValidated = { action: ra as any, requiresApproval: false, risk: "low" as const, description: "Auto-route" };
               await executeAction(raValidated);
-              addLog({ action: "auto-route", path: (ra as any).path, status: "success", message: "Route added (virtual)" });
+              addLog({ action: "auto-route", path: (ra as any).path, status: "success", message: friendlyLogMessage("auto-route", (ra as any).path, "", "success", lang) });
             } catch {
-              addLog({ action: "auto-route", path: (ra as any).path, status: "error", message: "فشل إضافة Route" });
+              addLog({ action: "auto-route", path: (ra as any).path, status: "error", message: friendlyLogMessage("auto-route", (ra as any).path, "", "error", lang) });
             }
           }
 
@@ -372,29 +367,26 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
 
           const successCount = virtualResults.filter(r => r.success).length;
           const failCount = virtualResults.length - successCount;
-          const summary = virtualResults.map(r =>
-            r.success ? `✅ ${r.desc}` : `❌ ${r.message}`
-          ).join("\n");
 
           setMessages(prev => [...prev, {
             id: `${mode}-virtual-${Date.now()}`,
             role: "ai",
-            text: `🖥️ تنفيذ افتراضي (${successCount} نجح${failCount > 0 ? ` / ${failCount} فشل` : ""}):\n${summary}`,
+            text: friendlyExecutionSummary(successCount, failCount, virtualResults.length, lang),
             timestamp: new Date(),
           }]);
 
-          if (successCount > 0) toast.success(`🖥️ تم تنفيذ ${successCount} أمر افتراضياً — المعاينة محدّثة`);
+          if (successCount > 0) toast.success(friendlyToast(`✅ تنفيذ ${successCount} أمر`, lang));
         }
       },
       onError: (error) => {
         setIsSending(false);
-        addLog({ action: "ai-error", status: "error", message: error });
+        addLog({ action: "ai-error", status: "error", message: friendlyLogMessage("ai-error", undefined, error, "error", lang) });
         setMessages((prev) =>
-          prev.map((m) => m.id === aiMsgId ? { ...m, text: `⚠️ ${error}` } : m)
+          prev.map((m) => m.id === aiMsgId ? { ...m, text: friendlyStatus("error", lang) } : m)
         );
       },
     });
-  }, [input, mode, onSendMessage, attachments, messages, addLog, onFilesGenerated]);
+  }, [input, mode, onSendMessage, attachments, messages, addLog, onFilesGenerated, lang]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -431,9 +423,13 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
               <Zap className="h-3.5 w-3.5 text-background" />
             </div>
             <div>
-              <span className="text-sm font-semibold text-foreground">Sirou Compiler</span>
+              <span className="text-sm font-semibold text-foreground">
+                {lang === "ar" ? "مساعد سيرو" : "Sirou Assistant"}
+              </span>
               {isSending && (
-                <span className="ml-2 text-[10px] text-primary animate-pulse">compiling...</span>
+                <span className="ml-2 text-[10px] text-primary animate-pulse">
+                  {lang === "ar" ? "يعمل..." : "working..."}
+                </span>
               )}
             </div>
           </div>
@@ -454,14 +450,16 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center opacity-60">
               <Bot className="h-12 w-12 text-muted-foreground/30 mb-3" />
-              <p className="text-sm text-muted-foreground">Sirou Compiler</p>
+              <p className="text-sm text-muted-foreground">
+                {lang === "ar" ? "مرحبًا! أنا مساعد سيرو 👋" : "Hi! I'm Sirou Assistant 👋"}
+              </p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                صِف تطبيقك وسأحوّله إلى React كامل مباشرة
+                {lang === "ar" ? "صِف لي تطبيقك وسأبنيه لك" : "Describe your app and I'll build it for you"}
               </p>
               <div className="mt-4 space-y-1.5 text-[11px] text-muted-foreground/40">
-                <p>💡 "أنشئ تطبيق مهام بصفحة رئيسية وصفحة إضافة"</p>
-                <p>💡 "أضف صفحة About للمشروع"</p>
-                <p>💡 "عدّل لون الخلفية في الصفحة الرئيسية"</p>
+                <p>💡 {lang === "ar" ? "\"أبغى تطبيق دردشة\"" : "\"I want a chat app\""}</p>
+                <p>💡 {lang === "ar" ? "\"أبغى متجر إلكتروني\"" : "\"I want an online store\""}</p>
+                <p>💡 {lang === "ar" ? "\"أبغى تطبيق مهام\"" : "\"I want a task manager\""}</p>
               </div>
             </div>
           )}
@@ -582,7 +580,7 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="صِف تطبيقك أو أعطِ أمراً..."
+              placeholder={lang === "ar" ? "صِف لي تطبيقك..." : "Describe your app..."}
               rows={1}
               className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 resize-none outline-none min-h-[36px] max-h-[120px] py-1.5"
               dir="auto"
