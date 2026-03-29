@@ -580,7 +580,7 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="صِف تطبيقك أو أعطِ أمراً..."
+              placeholder={lang === "ar" ? "صِف لي تطبيقك..." : "Describe your app..."}
               rows={1}
               className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/40 resize-none outline-none min-h-[36px] max-h-[120px] py-1.5"
               dir="auto"
