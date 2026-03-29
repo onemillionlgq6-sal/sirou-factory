@@ -380,13 +380,13 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
       },
       onError: (error) => {
         setIsSending(false);
-        addLog({ action: "ai-error", status: "error", message: error });
+        addLog({ action: "ai-error", status: "error", message: friendlyLogMessage("ai-error", undefined, error, "error", lang) });
         setMessages((prev) =>
-          prev.map((m) => m.id === aiMsgId ? { ...m, text: `⚠️ ${error}` } : m)
+          prev.map((m) => m.id === aiMsgId ? { ...m, text: friendlyStatus("error", lang) } : m)
         );
       },
     });
-  }, [input, mode, onSendMessage, attachments, messages, addLog, onFilesGenerated]);
+  }, [input, mode, onSendMessage, attachments, messages, addLog, onFilesGenerated, lang]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
