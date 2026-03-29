@@ -199,8 +199,9 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
       },
       onDone: async () => {
         setIsSending(false);
+        // Replace raw AI content with friendly "done" message
         setMessages((prev) =>
-          prev.map((m) => m.id === aiMsgId ? { ...m, text: aiContent || "✅ تم." } : m)
+          prev.map((m) => m.id === aiMsgId ? { ...m, text: friendlyStatus("building", lang) } : m)
         );
 
         if (!aiContent) return;
@@ -209,31 +210,24 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
         const validation = validateAIResponse(aiContent);
 
         if (!validation.valid) {
-          // REJECT: Not valid JSON or no valid actions
+          // Show friendly error instead of technical JSON errors
           for (const err of validation.errors) {
             addLog({
               action: "validation",
               status: "error",
-              message: `❌ رفض: ${err}`,
+              message: friendlyLogMessage("validation", undefined, err, "error", lang),
             });
           }
-          toast.error(`❌ رد AI غير صالح — ${validation.errors.length} خطأ`);
+          toast.error(lang === "ar" ? "⏳ أُعالج الطلب... حاول مرة أخرى" : "⏳ Processing... please try again");
           setMessages(prev => [...prev, {
             id: `${mode}-reject-${Date.now()}`,
             role: "ai",
-            text: `🚫 رد مرفوض — ليس JSON Actions صالح:\n${validation.errors.join("\n")}`,
+            text: lang === "ar"
+              ? "⚠️ لم أستطع فهم الطلب بالكامل. حاول وصف تطبيقك بطريقة أبسط أو أقصر."
+              : "⚠️ I couldn't fully understand the request. Try describing your app more simply.",
             timestamp: new Date(),
           }]);
-          return; // BLOCK execution entirely
-        }
-
-        // Log validation errors for partial failures
-        for (const err of validation.errors) {
-          addLog({
-            action: "validation",
-            status: "warning",
-            message: `⚠️ ${err}`,
-          });
+          return;
         }
 
         // Set pending actions for executor panel
@@ -242,15 +236,17 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
         // Generate auto-route actions FROM validated JSON actions only
         const routeActions = generateAutoRouteActions(validation.actions);
 
-        toast.success(`🔧 ${validation.actions.length} أمر صالح${routeActions.length > 0 ? ` + ${routeActions.length} route تلقائي` : ""}`);
+        const totalSteps = validation.actions.length;
+        toast.success(friendlyToast(`⚡ ${totalSteps} أمر صالح`, lang));
 
-        // Log validated actions
-        for (const act of validation.actions) {
+        // Log validated actions with friendly messages
+        for (let idx = 0; idx < validation.actions.length; idx++) {
+          const act = validation.actions[idx];
           addLog({
             action: (act.action as any).action,
             path: (act.action as any).path,
             status: "warning",
-            message: `في الانتظار: ${act.description}`,
+            message: `${stepLabel(idx + 1, totalSteps, lang)} — ${friendlyLogMessage((act.action as any).action, (act.action as any).path, "", "warning", lang)}`,
           });
         }
 
