@@ -1,19 +1,23 @@
-import { useState, useCallback, useEffect } from "react";
-import { PanelLeftClose, PanelLeftOpen, Settings, Zap } from "lucide-react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { PanelLeftClose, PanelLeftOpen, Settings, Database } from "lucide-react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AIChatPanel from "@/components/factory/AIChatPanel";
 import PreviewPanel from "@/components/factory/PreviewPanel";
 import SovereignIcon from "@/components/factory/SovereignIcon";
 import SettingsModal from "@/components/factory/SettingsModal";
+import SupabaseConnectModal from "@/components/factory/SupabaseConnectModal";
 import { toast } from "sonner";
 import { initGlobalErrorHandlers } from "@/lib/health-monitor";
 import { isLocalServerRunning } from "@/lib/local-executor";
+import { isConnected as isSupabaseConnected } from "@/lib/supabase-sync";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [serverOnline, setServerOnline] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [supabaseOpen, setSupabaseOpen] = useState(false);
+  const [dbConnected, setDbConnected] = useState(isSupabaseConnected());
   const [generatedFiles, setGeneratedFiles] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -58,6 +62,19 @@ const Index = () => {
             />
             {serverOnline ? "Executor Online" : "Executor Offline"}
           </div>
+
+          {/* ─── زر Supabase ─── */}
+          <button
+            onClick={() => setSupabaseOpen(true)}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-[hsl(220,20%,14%)] transition-colors relative"
+            title="Supabase"
+          >
+            <Database className="h-4 w-4" />
+            {dbConnected && (
+              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_4px_hsl(142,60%,50%)]" />
+            )}
+          </button>
+
           <button
             onClick={() => setSettingsOpen(true)}
             className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-[hsl(220,20%,14%)] transition-colors"
@@ -68,6 +85,11 @@ const Index = () => {
       </header>
 
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <SupabaseConnectModal
+        open={supabaseOpen}
+        onOpenChange={setSupabaseOpen}
+        onConnectionChange={setDbConnected}
+      />
 
       {/* ─── Main Content ─── */}
       <div className="flex-1 overflow-hidden">
