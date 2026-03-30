@@ -13,6 +13,39 @@ export interface ValidationResult {
   rawCount: number;
 }
 
+// ─── حماية الأسرار: كشف المفاتيح السرية في المحتوى ───
+const SECRET_PATTERNS = [
+  /api[_-]?key/i, /secret[_-]?key/i, /password/i, /token/i,
+  /private[_-]?key/i, /auth[_-]?token/i, /client[_-]?secret/i,
+  /access[_-]?key/i, /bearer\s+\S{20,}/i,
+];
+
+function containsSecrets(text: string): boolean {
+  return SECRET_PATTERNS.some(p => p.test(text));
+}
+
+function redactForLog(text: string): string {
+  if (!containsSecrets(text)) return text;
+  // إخفاء القيم الطويلة التي تشبه المفاتيح
+  return text.replace(/(['"])[A-Za-z0-9_\-/+]{20,}\1/g, '"[REDACTED]"');
+}
+
+// ─── عداد طلبات (Rate Limiter) ───
+const requestTimestamps: number[] = [];
+const RATE_LIMIT = 10;
+const RATE_WINDOW_MS = 60_000;
+const MAX_INPUT_SIZE = 100_000; // 100KB
+
+function checkRateLimit(): boolean {
+  const now = Date.now();
+  while (requestTimestamps.length > 0 && now - requestTimestamps[0] > RATE_WINDOW_MS) {
+    requestTimestamps.shift();
+  }
+  if (requestTimestamps.length >= RATE_LIMIT) return false;
+  requestTimestamps.push(now);
+  return true;
+}
+
 const CODE_BLOCK_REGEX = /```(?:json)?\s*\n?([\s\S]*?)```/gi;
 const TRUNCATION_PATTERNS = [/\.\.\.\s*$/, /…\s*$/, /\[truncated\]/i, /\[continued\]/i];
 const MAX_JSON_SIZE = 500_000;
@@ -263,6 +296,33 @@ function preProcessAction(raw: unknown): unknown {
 export function validateAIResponse(aiText: string): ValidationResult {
   console.log(`[Validator] Input length: ${aiText.length}`);
 
+  // ─── حد حجم الطلب ───
+  if (aiText.length > MAX_INPUT_SIZE) {
+    console.warn(`[Validator] 🚫 Input too large: ${aiText.length} chars (max ${MAX_INPUT_SIZE})`);
+    return {
+      valid: false,
+      actions: [],
+      errors: ["🚫 الطلب كبير جداً. الحد الأقصى 100KB. قسّم الطلب لأجزاء أصغر."],
+      rawCount: 0,
+    };
+  }
+
+  // ─── عداد طلبات ───
+  if (!checkRateLimit()) {
+    console.warn(`[Validator] ⏳ Rate limit exceeded`);
+    return {
+      valid: false,
+      actions: [],
+      errors: ["⏳ تجاوزت الحد الأقصى (10 طلبات/دقيقة). انتظر قليلاً."],
+      rawCount: 0,
+    };
+  }
+
+  // ─── حماية الأسرار ───
+  if (containsSecrets(aiText)) {
+    console.warn("[Validator] ⚠️ محتوى يحتوي على أسرار محتملة — تم إخفاؤها من السجل");
+  }
+
   const { parsed, error } = extractStrictJSON(aiText);
 
   if (error || parsed === null) {
@@ -292,6 +352,11 @@ export function validateAIResponse(aiText: string): ValidationResult {
 
   for (let i = 0; i < rawItems.length; i++) {
     const processed = preProcessAction(rawItems[i]);
+
+    // تسجيل آمن (بدون أسرار)
+    const logSafe = redactForLog(JSON.stringify(processed).slice(0, 200));
+    console.log(`[Validator] Action #${i + 1}: ${logSafe}`);
+
     const result = validateAndClassify(processed);
     if ("error" in result) {
       console.error(`[Validator] Action #${i + 1} rejected: ${result.error}`);
