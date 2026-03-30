@@ -18,8 +18,55 @@ const app = express();
 const port = 3001;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+// ─── CORS: فقط localhost مسموح ───
+const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:3000',
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // السماح بالطلبات بدون origin (مثل curl المحلي)
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    console.warn(`🚫 CORS: طلب مرفوض من ${origin}`);
+    return callback(new Error('غير مسموح — CORS'));
+  },
+  credentials: true,
+}));
+
+// ─── حد حجم الطلب: 100KB ───
+app.use(express.json({ limit: '100kb' }));
+app.use((err, _req, res, next) => {
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ error: '🚫 الطلب كبير جداً. الحد الأقصى 100KB. قسّم الطلب لأجزاء أصغر.' });
+  }
+  next(err);
+});
+
+// ─── عداد طلبات (Rate Limiter) ───
+const requestLog = [];
+const RATE_LIMIT = 10;
+const RATE_WINDOW_MS = 60_000;
+
+function checkRateLimit() {
+  const now = Date.now();
+  // إزالة الطلبات القديمة
+  while (requestLog.length > 0 && now - requestLog[0] > RATE_WINDOW_MS) {
+    requestLog.shift();
+  }
+  if (requestLog.length >= RATE_LIMIT) {
+    return false;
+  }
+  requestLog.push(now);
+  return true;
+}
 
 // ─── Forbidden paths ───
 const FORBIDDEN = ['node_modules', '.env', 'package-lock.json', 'bun.lock', '.git'];
@@ -35,6 +82,29 @@ function safePath(targetPath) {
   }
   return resolved;
 }
+
+// ─── قائمة الأوامر المسموحة (Whitelist) ───
+const ALLOWED_COMMANDS = ['npm', 'npx', 'node', 'git', 'mkdir', 'cp', 'mv'];
+
+function isCommandAllowed(command) {
+  if (!command || typeof command !== 'string') return false;
+  const base = command.trim().split(/\s+/)[0];
+  return ALLOWED_COMMANDS.includes(base);
+}
+
+// ─── Rate limit middleware ───
+app.use('/execute', (req, res, next) => {
+  if (!checkRateLimit()) {
+    return res.status(429).json({ error: '⏳ تجاوزت الحد الأقصى (10 طلبات/دقيقة). انتظر قليلاً.' });
+  }
+  next();
+});
+app.use('/execute-batch', (req, res, next) => {
+  if (!checkRateLimit()) {
+    return res.status(429).json({ error: '⏳ تجاوزت الحد الأقصى (10 طلبات/دقيقة). انتظر قليلاً.' });
+  }
+  next();
+});
 
 // ─── Execute endpoint ───
 app.post('/execute', (req, res) => {
@@ -106,17 +176,23 @@ app.post('/execute', (req, res) => {
       }
 
       case 'shell_cmd': {
-        // Shell commands logged but not auto-executed for safety
-        return res.json({ 
-          success: true, 
+        if (!isCommandAllowed(command || targetPath)) {
+          const cmd = command || targetPath;
+          console.warn(`🚫 أمر مرفوض: ${cmd}`);
+          return res.status(403).json({
+            error: `🚫 أمر غير مسموح: "${cmd}". الأوامر المسموحة: ${ALLOWED_COMMANDS.join(', ')}`,
+          });
+        }
+        return res.json({
+          success: true,
           message: `📋 Shell command logged (manual execution required): ${command || targetPath}`,
           requiresManual: true
         });
       }
 
       case 'install_dep': {
-        return res.json({ 
-          success: true, 
+        return res.json({
+          success: true,
           message: `📦 Install logged: ${(packages || []).join(', ')}${dev ? ' (dev)' : ''}`,
           requiresManual: true
         });
@@ -140,7 +216,6 @@ app.post('/execute-batch', (req, res) => {
   const results = [];
   for (const act of actions) {
     try {
-      // Re-use single execute logic inline
       const targetPath = act.path;
       if (!act.action || !targetPath) {
         results.push({ success: false, error: 'Missing action or path' });
@@ -197,5 +272,6 @@ app.get('/health', (_req, res) => {
 app.listen(port, () => {
   console.log(`🚀 Sirou Factory Executor Running on http://localhost:${port}`);
   console.log(`📁 Project root: ${__dirname}`);
+  console.log(`🔒 CORS: localhost فقط`);
   console.log(`⚡ Ready to execute AI actions on the file system`);
 });
