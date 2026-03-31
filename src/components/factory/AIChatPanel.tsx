@@ -387,6 +387,11 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
             }
           }
           if (Object.keys(fileMap).length > 0) {
+            saveHistorySnapshot(
+              lang === "ar" ? `تنفيذ افتراضي: ${successCount} ملف` : `Virtual execution: ${successCount} files`,
+              "ai_execution",
+              { ...getCurrentSnapshot(), ...fileMap }
+            );
             onFilesGenerated?.(fileMap);
           }
 
