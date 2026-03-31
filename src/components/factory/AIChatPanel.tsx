@@ -13,6 +13,7 @@ import { handleAIExecution, isLocalServerRunning, executeLocal } from "@/lib/loc
 import { executeAction, loadProjectFS, getProjectFS } from "@/lib/executor/executor-engine";
 import ExecutorPanel from "@/components/factory/ExecutorPanel";
 import ExecutionLog, { type LogEntry } from "@/components/factory/ExecutionLog";
+import HistoryBar from "@/components/factory/HistoryBar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Bot, Sparkles, X, ImagePlus, Eye, Trash2, Zap,
@@ -28,6 +29,9 @@ import {
   progressBar,
   stepLabel,
 } from "@/lib/friendly-messages";
+import {
+  pushSnapshot, setCurrentSnapshot, getCurrentSnapshot,
+} from "@/lib/history-manager";
 
 type ChatMode = "app" | "factory";
 
