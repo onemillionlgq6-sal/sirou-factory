@@ -436,7 +436,10 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
       >
-        {/* Header */}
+      {/* ─── History Bar ─── */}
+      <HistoryBar onRestore={handleHistoryRestore} refreshTrigger={historyTrigger} />
+
+      {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/20 flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
