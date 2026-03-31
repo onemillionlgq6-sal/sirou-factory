@@ -110,6 +110,21 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [historyTrigger, setHistoryTrigger] = useState(0);
+
+  // حفظ snapshot بعد كل تنفيذ ناجح
+  const saveHistorySnapshot = useCallback((description: string, type: "ai_execution" | "file_create" | "file_edit" | "file_delete", files: Record<string, string>) => {
+    pushSnapshot(description, type, files);
+    setCurrentSnapshot(files);
+    setHistoryTrigger(t => t + 1);
+  }, []);
+
+  const handleHistoryRestore = useCallback((files: Record<string, string>) => {
+    setCurrentSnapshot(files);
+    onFilesGenerated?.(files);
+    setHistoryTrigger(t => t + 1);
+  }, [onFilesGenerated]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
