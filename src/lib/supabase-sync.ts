@@ -107,6 +107,17 @@ CREATE TABLE IF NOT EXISTS settings (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- جدول التاريخ (Undo/History)
+CREATE TABLE IF NOT EXISTS history (
+  id TEXT PRIMARY KEY,
+  timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  description TEXT NOT NULL DEFAULT '',
+  type TEXT NOT NULL DEFAULT 'manual',
+  snapshot JSONB NOT NULL DEFAULT '{}'::jsonb,
+  metadata JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- تحديث updated_at تلقائياً
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
