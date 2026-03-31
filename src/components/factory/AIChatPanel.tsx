@@ -386,6 +386,9 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
               fileMap[a.path] = a.content;
             }
           }
+          const successCount = virtualResults.filter(r => r.success).length;
+          const failCount = virtualResults.length - successCount;
+
           if (Object.keys(fileMap).length > 0) {
             saveHistorySnapshot(
               lang === "ar" ? `تنفيذ افتراضي: ${successCount} ملف` : `Virtual execution: ${successCount} files`,
@@ -394,9 +397,6 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
             );
             onFilesGenerated?.(fileMap);
           }
-
-          const successCount = virtualResults.filter(r => r.success).length;
-          const failCount = virtualResults.length - successCount;
 
           setMessages(prev => [...prev, {
             id: `${mode}-virtual-${Date.now()}`,
