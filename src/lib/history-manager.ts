@@ -118,7 +118,6 @@ export function pushSnapshot(
   files: Record<string, string>,
   metadata?: Record<string, unknown>,
 ): HistoryEntry {
-  // حفظ الحالة الحالية في undoStack
   const entry: HistoryEntry = {
     id: `hist-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     timestamp: new Date().toISOString(),
@@ -130,16 +129,32 @@ export function pushSnapshot(
   undoStack.push(entry);
   if (undoStack.length > MAX_ENTRIES) undoStack.shift();
   
-  // مسح redo عند push جديد
   redoStack = [];
-  
-  // تحديث الحالة الحالية
   currentSnapshot = { ...files };
   
   // حفظ في IndexedDB (غير حاجب)
   saveEntry(entry).catch(console.error);
+
+  // مزامنة تلقائية مع Supabase عند الاتصال
+  autoSyncEntry(entry);
   
   return entry;
+}
+
+async function autoSyncEntry(entry: HistoryEntry): Promise<void> {
+  try {
+    const { getClient } = await import("./supabase-sync");
+    const client = getClient();
+    if (!client) return;
+    await client.from("history").upsert({
+      id: entry.id,
+      timestamp: entry.timestamp,
+      description: entry.description,
+      type: entry.type,
+      snapshot: entry.snapshot,
+      metadata: entry.metadata || {},
+    }, { onConflict: "id" });
+  } catch { /* صامت — الاتصال اختياري */ }
 }
 
 export function undo(): { entry: HistoryEntry; restoredFiles: Record<string, string> } | null {
