@@ -13,6 +13,7 @@ import { handleAIExecution, isLocalServerRunning, executeLocal } from "@/lib/loc
 import { executeAction, loadProjectFS, getProjectFS } from "@/lib/executor/executor-engine";
 import ExecutorPanel from "@/components/factory/ExecutorPanel";
 import ExecutionLog, { type LogEntry } from "@/components/factory/ExecutionLog";
+import HistoryBar from "@/components/factory/HistoryBar";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Bot, Sparkles, X, ImagePlus, Eye, Trash2, Zap,
@@ -28,6 +29,9 @@ import {
   progressBar,
   stepLabel,
 } from "@/lib/friendly-messages";
+import {
+  pushSnapshot, setCurrentSnapshot, getCurrentSnapshot,
+} from "@/lib/history-manager";
 
 type ChatMode = "app" | "factory";
 
@@ -106,6 +110,22 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [historyTrigger, setHistoryTrigger] = useState(0);
+
+  // حفظ snapshot بعد كل تنفيذ ناجح
+  const saveHistorySnapshot = useCallback((description: string, type: "ai_execution" | "file_create" | "file_edit" | "file_delete", files: Record<string, string>) => {
+    pushSnapshot(description, type, files);
+    setCurrentSnapshot(files);
+    setHistoryTrigger(t => t + 1);
+  }, []);
+
+  const handleHistoryRestore = useCallback((files: Record<string, string>) => {
+    setCurrentSnapshot(files);
+    onFilesGenerated?.(files);
+    setHistoryTrigger(t => t + 1);
+  }, [onFilesGenerated]);
+
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -302,6 +322,11 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
             }
           }
           if (Object.keys(fileMap).length > 0) {
+            saveHistorySnapshot(
+              lang === "ar" ? `تنفيذ AI: ${successCount} ملف` : `AI execution: ${successCount} files`,
+              "ai_execution",
+              { ...getCurrentSnapshot(), ...fileMap }
+            );
             onFilesGenerated?.(fileMap);
           }
 
@@ -361,12 +386,17 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
               fileMap[a.path] = a.content;
             }
           }
-          if (Object.keys(fileMap).length > 0) {
-            onFilesGenerated?.(fileMap);
-          }
-
           const successCount = virtualResults.filter(r => r.success).length;
           const failCount = virtualResults.length - successCount;
+
+          if (Object.keys(fileMap).length > 0) {
+            saveHistorySnapshot(
+              lang === "ar" ? `تنفيذ افتراضي: ${successCount} ملف` : `Virtual execution: ${successCount} files`,
+              "ai_execution",
+              { ...getCurrentSnapshot(), ...fileMap }
+            );
+            onFilesGenerated?.(fileMap);
+          }
 
           setMessages(prev => [...prev, {
             id: `${mode}-virtual-${Date.now()}`,
@@ -416,7 +446,10 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
       >
-        {/* Header */}
+      {/* ─── History Bar ─── */}
+      <HistoryBar onRestore={handleHistoryRestore} refreshTrigger={historyTrigger} />
+
+      {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/20 flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
