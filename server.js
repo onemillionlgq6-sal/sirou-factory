@@ -19,20 +19,12 @@ const port = 3001;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ─── CORS: فقط localhost مسموح ───
-const ALLOWED_ORIGINS = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'http://localhost:3000',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:5174',
-  'http://127.0.0.1:3000',
-];
+const ALLOWED_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
 
 app.use(cors({
   origin: (origin, callback) => {
-    // السماح بالطلبات بدون origin (مثل curl المحلي)
     if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) {
+    if (ALLOWED_ORIGIN.test(origin)) {
       return callback(null, true);
     }
     console.warn(`🚫 CORS: طلب مرفوض من ${origin}`);
