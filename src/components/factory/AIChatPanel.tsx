@@ -124,7 +124,8 @@ const AIChatPanel = ({ mode, onSendMessage, onFilesGenerated, isGenerating }: AI
     onFilesGenerated?.(files);
     setHistoryTrigger(t => t + 1);
   }, [onFilesGenerated]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
