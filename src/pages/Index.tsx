@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { initGlobalErrorHandlers } from "@/lib/health-monitor";
 import { isLocalServerRunning } from "@/lib/local-executor";
 import { isConnected as isSupabaseConnected } from "@/lib/supabase-sync";
+import { isGitHubConnected } from "@/lib/github-sync";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 const Index = () => {
