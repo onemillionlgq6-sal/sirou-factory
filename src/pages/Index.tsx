@@ -6,6 +6,7 @@ import PreviewPanel from "@/components/factory/PreviewPanel";
 import SovereignIcon from "@/components/factory/SovereignIcon";
 import SettingsModal from "@/components/factory/SettingsModal";
 import SupabaseConnectModal from "@/components/factory/SupabaseConnectModal";
+import GitHubConnectModal from "@/components/factory/GitHubConnectModal";
 import { toast } from "sonner";
 import { initGlobalErrorHandlers } from "@/lib/health-monitor";
 import { isLocalServerRunning } from "@/lib/local-executor";
