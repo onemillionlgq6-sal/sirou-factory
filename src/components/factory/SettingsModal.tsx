@@ -229,6 +229,61 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
             </div>
           </div>
 
+          {/* GitHub OAuth App */}
+          <div>
+            <p className="text-sm font-medium text-foreground mb-2">
+              <GitBranch className="h-4 w-4 inline me-1" />
+              GitHub OAuth App
+            </p>
+            <div className="space-y-2">
+              <Input
+                dir="ltr"
+                placeholder="Client ID"
+                value={ghClientId}
+                onChange={(e) => setGhClientId(e.target.value)}
+                className="sf-glass-subtle border-foreground/20 text-foreground placeholder:text-muted-foreground text-xs"
+              />
+              <div className="relative">
+                <Input
+                  dir="ltr"
+                  type={showGhSecret ? "text" : "password"}
+                  placeholder="Client Secret"
+                  value={ghClientSecret}
+                  onChange={(e) => setGhClientSecret(e.target.value)}
+                  className="sf-glass-subtle border-foreground/20 text-foreground placeholder:text-muted-foreground pe-10 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowGhSecret(!showGhSecret)}
+                  className="absolute end-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showGhSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <Button
+                onClick={() => {
+                  if (ghClientId.trim() && ghClientSecret.trim()) {
+                    storeOAuthApp({ clientId: ghClientId.trim(), clientSecret: ghClientSecret.trim() });
+                    toast.success("✅ تم حفظ GitHub OAuth App");
+                  } else {
+                    toast.error("أدخل Client ID و Secret");
+                  }
+                }}
+                size="sm"
+                className="w-full sf-gradient-bg text-primary-foreground"
+              >
+                حفظ
+              </Button>
+              <p className="text-[10px] text-muted-foreground/70">
+                أنشئ OAuth App من{" "}
+                <a href="https://github.com/settings/developers" target="_blank" rel="noopener noreferrer" className="underline text-sf-safe">
+                  GitHub Developer Settings
+                </a>
+                {" "}— Callback URL: <code className="text-muted-foreground">http://localhost:3001/github/oauth/callback</code>
+              </p>
+            </div>
+          </div>
+
           {/* Language */}
           <div>
             <p className="text-sm font-medium text-foreground mb-2">{t("settings.language")}</p>
