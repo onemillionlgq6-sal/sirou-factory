@@ -256,6 +256,70 @@ app.post('/execute-batch', (req, res) => {
   res.json({ success: true, results });
 });
 
+// ─── GitHub OAuth endpoints ───
+
+// Step 1: Start OAuth — redirect user to GitHub
+app.get('/github/oauth/start', (req, res) => {
+  const clientId = req.query.client_id;
+  if (!clientId) {
+    return res.status(400).json({ error: 'Missing client_id' });
+  }
+  const scope = 'repo';
+  const state = Math.random().toString(36).substring(2, 15);
+  const redirectUri = `http://localhost:${port}/github/oauth/callback`;
+  const url = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=${scope}&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  res.json({ url, state });
+});
+
+// Step 2: GitHub redirects here with ?code=...&state=...
+app.get('/github/oauth/callback', async (req, res) => {
+  const { code, state } = req.query;
+  if (!code) {
+    return res.send('<html><body><h2>❌ خطأ: لم يتم الحصول على رمز التفويض</h2></body></html>');
+  }
+  // Store code temporarily for frontend to pick up
+  globalThis.__ghOAuthCode = { code, state, timestamp: Date.now() };
+  res.send(`<html><head><style>body{font-family:system-ui;background:#0d1117;color:#e6edf3;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}div{text-align:center}h2{color:#3fb950}p{color:#8b949e}</style></head><body><div><h2>✅ تم التفويض بنجاح</h2><p>يمكنك إغلاق هذه النافذة والعودة إلى Sirou Factory</p></div><script>window.close()</script></body></html>`);
+});
+
+// Step 3: Frontend polls for the token
+app.get('/github/oauth/poll', (req, res) => {
+  const data = globalThis.__ghOAuthCode;
+  if (!data || Date.now() - data.timestamp > 300000) {
+    return res.json({ ready: false });
+  }
+  res.json({ ready: true, code: data.code, state: data.state });
+  globalThis.__ghOAuthCode = null;
+});
+
+// Step 4: Exchange code for token (requires client_secret)
+app.post('/github/oauth/token', async (req, res) => {
+  const { code, client_id, client_secret } = req.body;
+  if (!code || !client_id || !client_secret) {
+    return res.status(400).json({ error: 'Missing code, client_id, or client_secret' });
+  }
+  try {
+    const response = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ client_id, client_secret, code }),
+    });
+    const data = await response.json();
+    if (data.access_token) {
+      // Get user info
+      const userRes = await fetch('https://api.github.com/user', {
+        headers: { Authorization: `Bearer ${data.access_token}`, Accept: 'application/vnd.github+json' },
+      });
+      const user = await userRes.json();
+      res.json({ ok: true, token: data.access_token, login: user.login, scope: data.scope });
+    } else {
+      res.status(400).json({ ok: false, error: data.error_description || data.error });
+    }
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // ─── Health check ───
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
