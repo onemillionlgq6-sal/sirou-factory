@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
-import { Settings, Moon, Sun, Globe, Paintbrush, BrainCircuit, Eye, EyeOff } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { Settings, Moon, Sun, Globe, Paintbrush, BrainCircuit, Eye, EyeOff, GitBranch } from "lucide-react";
 import { usePlatform } from "@/hooks/use-platform";
+import { storeOAuthApp, getOAuthApp } from "@/lib/github-oauth";
 import type { VisualStyle } from "@/lib/platform";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
