@@ -67,6 +67,18 @@ const Index = () => {
             {serverOnline ? "Executor Online" : "Executor Offline"}
           </div>
 
+          {/* ─── زر GitHub ─── */}
+          <button
+            onClick={() => setGithubOpen(true)}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-[hsl(220,20%,14%)] transition-colors relative"
+            title="GitHub"
+          >
+            <GitBranch className="h-4 w-4" />
+            {ghConnected && (
+              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_4px_hsl(142,60%,50%)]" />
+            )}
+          </button>
+
           {/* ─── زر Supabase ─── */}
           <button
             onClick={() => setSupabaseOpen(true)}
@@ -89,6 +101,11 @@ const Index = () => {
       </header>
 
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <GitHubConnectModal
+        open={githubOpen}
+        onOpenChange={setGithubOpen}
+        onConnectionChange={setGhConnected}
+      />
       <SupabaseConnectModal
         open={supabaseOpen}
         onOpenChange={setSupabaseOpen}
