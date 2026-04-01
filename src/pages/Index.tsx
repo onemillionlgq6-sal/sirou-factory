@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { PanelLeftClose, PanelLeftOpen, Settings, Database } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Settings, Database, GitBranch } from "lucide-react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AIChatPanel from "@/components/factory/AIChatPanel";
 import PreviewPanel from "@/components/factory/PreviewPanel";
