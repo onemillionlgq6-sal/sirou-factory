@@ -1,15 +1,17 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { PanelLeftClose, PanelLeftOpen, Settings, Database } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Settings, Database, GitBranch } from "lucide-react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AIChatPanel from "@/components/factory/AIChatPanel";
 import PreviewPanel from "@/components/factory/PreviewPanel";
 import SovereignIcon from "@/components/factory/SovereignIcon";
 import SettingsModal from "@/components/factory/SettingsModal";
 import SupabaseConnectModal from "@/components/factory/SupabaseConnectModal";
+import GitHubConnectModal from "@/components/factory/GitHubConnectModal";
 import { toast } from "sonner";
 import { initGlobalErrorHandlers } from "@/lib/health-monitor";
 import { isLocalServerRunning } from "@/lib/local-executor";
 import { isConnected as isSupabaseConnected } from "@/lib/supabase-sync";
+import { isGitHubConnected } from "@/lib/github-sync";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 const Index = () => {
@@ -17,8 +19,10 @@ const Index = () => {
   const [serverOnline, setServerOnline] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [supabaseOpen, setSupabaseOpen] = useState(false);
+  const [githubOpen, setGithubOpen] = useState(false);
   const [dbConnected, setDbConnected] = useState(isSupabaseConnected());
   const [generatedFiles, setGeneratedFiles] = useState<Record<string, string>>({});
+  const [ghConnected, setGhConnected] = useState(isGitHubConnected());
 
   useEffect(() => {
     initGlobalErrorHandlers();
@@ -63,6 +67,18 @@ const Index = () => {
             {serverOnline ? "Executor Online" : "Executor Offline"}
           </div>
 
+          {/* ─── زر GitHub ─── */}
+          <button
+            onClick={() => setGithubOpen(true)}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-[hsl(220,20%,14%)] transition-colors relative"
+            title="GitHub"
+          >
+            <GitBranch className="h-4 w-4" />
+            {ghConnected && (
+              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_4px_hsl(142,60%,50%)]" />
+            )}
+          </button>
+
           {/* ─── زر Supabase ─── */}
           <button
             onClick={() => setSupabaseOpen(true)}
@@ -85,6 +101,11 @@ const Index = () => {
       </header>
 
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <GitHubConnectModal
+        open={githubOpen}
+        onOpenChange={setGithubOpen}
+        onConnectionChange={setGhConnected}
+      />
       <SupabaseConnectModal
         open={supabaseOpen}
         onOpenChange={setSupabaseOpen}
