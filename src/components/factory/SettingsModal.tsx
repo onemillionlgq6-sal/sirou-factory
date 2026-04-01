@@ -83,6 +83,17 @@ const SettingsModal = ({ open, onOpenChange }: SettingsModalProps) => {
   ];
 
   const [showDeepseekKey, setShowDeepseekKey] = useState(false);
+  const [ghClientId, setGhClientId] = useState("");
+  const [ghClientSecret, setGhClientSecret] = useState("");
+  const [showGhSecret, setShowGhSecret] = useState(false);
+
+  useEffect(() => {
+    const app = getOAuthApp();
+    if (app) {
+      setGhClientId(app.clientId);
+      setGhClientSecret(app.clientSecret);
+    }
+  }, []);
 
   const handleDeepseekKeyChange = useCallback((key: string) => {
     const updated = { ...prefs, deepseekKey: key };
