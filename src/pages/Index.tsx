@@ -19,6 +19,7 @@ const Index = () => {
   const [serverOnline, setServerOnline] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [supabaseOpen, setSupabaseOpen] = useState(false);
+  const [githubOpen, setGithubOpen] = useState(false);
   const [dbConnected, setDbConnected] = useState(isSupabaseConnected());
   const [generatedFiles, setGeneratedFiles] = useState<Record<string, string>>({});
 
