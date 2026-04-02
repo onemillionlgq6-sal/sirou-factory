@@ -22,6 +22,7 @@ const Index = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [supabaseOpen, setSupabaseOpen] = useState(false);
   const [githubOpen, setGithubOpen] = useState(false);
+  const [kimiOpen, setKimiOpen] = useState(false);
   const [dbConnected, setDbConnected] = useState(isSupabaseConnected());
   const [generatedFiles, setGeneratedFiles] = useState<Record<string, string>>({});
   const [ghConnected, setGhConnected] = useState(isGitHubConnected());
