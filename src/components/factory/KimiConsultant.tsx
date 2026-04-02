@@ -5,6 +5,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { X, Send, Search, Trash2, MessageSquare, History, BarChart3, Plus } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { sendAIMessage, type AIMessage } from "@/lib/ai-provider";
