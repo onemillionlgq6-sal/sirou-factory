@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { PanelLeftClose, PanelLeftOpen, Settings, Database, GitBranch } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Settings, Database, GitBranch, Bot } from "lucide-react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AIChatPanel from "@/components/factory/AIChatPanel";
 import PreviewPanel from "@/components/factory/PreviewPanel";
+import KimiConsultant from "@/components/factory/KimiConsultant";
 import SovereignIcon from "@/components/factory/SovereignIcon";
 import SettingsModal from "@/components/factory/SettingsModal";
 import SupabaseConnectModal from "@/components/factory/SupabaseConnectModal";
@@ -13,6 +14,7 @@ import { isLocalServerRunning } from "@/lib/local-executor";
 import { isConnected as isSupabaseConnected } from "@/lib/supabase-sync";
 import { isGitHubConnected } from "@/lib/github-sync";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { AnimatePresence } from "framer-motion";
 
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -20,6 +22,7 @@ const Index = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [supabaseOpen, setSupabaseOpen] = useState(false);
   const [githubOpen, setGithubOpen] = useState(false);
+  const [kimiOpen, setKimiOpen] = useState(false);
   const [dbConnected, setDbConnected] = useState(isSupabaseConnected());
   const [generatedFiles, setGeneratedFiles] = useState<Record<string, string>>({});
   const [ghConnected, setGhConnected] = useState(isGitHubConnected());
@@ -66,6 +69,18 @@ const Index = () => {
             />
             {serverOnline ? "Executor Online" : "Executor Offline"}
           </div>
+
+          {/* ─── زر Kimi ─── */}
+          <button
+            onClick={() => setKimiOpen(!kimiOpen)}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-[hsl(220,20%,14%)] transition-colors relative"
+            title="استشر Kimi"
+          >
+            <Bot className="h-4 w-4" />
+            {kimiOpen && (
+              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_4px_hsl(38,90%,50%)]" />
+            )}
+          </button>
 
           {/* ─── زر GitHub ─── */}
           <button
@@ -134,11 +149,25 @@ const Index = () => {
           )}
 
           {/* Right: Preview */}
-          <ResizablePanel defaultSize={sidebarOpen ? 70 : 100}>
+          <ResizablePanel defaultSize={sidebarOpen ? (kimiOpen ? 40 : 70) : (kimiOpen ? 70 : 100)}>
             <ErrorBoundary moduleName="PreviewPanel" fallbackTitleAr="خطأ في المعاينة">
               <PreviewPanel generatedFiles={generatedFiles} />
             </ErrorBoundary>
           </ResizablePanel>
+
+          {/* Kimi Consultant Panel */}
+          <AnimatePresence>
+            {kimiOpen && (
+              <>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={30} minSize={20} maxSize={45}>
+                  <ErrorBoundary moduleName="KimiConsultant" fallbackTitleAr="خطأ في المستشار">
+                    <KimiConsultant onClose={() => setKimiOpen(false)} generatedFiles={generatedFiles} />
+                  </ErrorBoundary>
+                </ResizablePanel>
+              </>
+            )}
+          </AnimatePresence>
         </ResizablePanelGroup>
       </div>
     </div>
