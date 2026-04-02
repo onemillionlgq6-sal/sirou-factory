@@ -70,6 +70,18 @@ const Index = () => {
             {serverOnline ? "Executor Online" : "Executor Offline"}
           </div>
 
+          {/* ─── زر Kimi ─── */}
+          <button
+            onClick={() => setKimiOpen(!kimiOpen)}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-[hsl(220,20%,14%)] transition-colors relative"
+            title="استشر Kimi"
+          >
+            <Bot className="h-4 w-4" />
+            {kimiOpen && (
+              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_4px_hsl(38,90%,50%)]" />
+            )}
+          </button>
+
           {/* ─── زر GitHub ─── */}
           <button
             onClick={() => setGithubOpen(true)}
