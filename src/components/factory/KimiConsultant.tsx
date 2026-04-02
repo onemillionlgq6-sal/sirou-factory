@@ -5,6 +5,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { X, Send, Search, Trash2, MessageSquare, History, BarChart3, Plus } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { sendAIMessage, type AIMessage } from "@/lib/ai-provider";
@@ -275,7 +276,13 @@ export default function KimiConsultant({ onClose, generatedFiles }: Props) {
                   <span className="font-bold text-[10px] block mb-0.5 text-muted-foreground">
                     {msg.sender === "user" ? "👤 أنت" : "🤖 Kimi"}
                   </span>
-                  <p className="whitespace-pre-wrap">{msg.text}</p>
+                  {msg.sender === "kimi" ? (
+                    <div className="prose prose-sm prose-invert max-w-none [&_p]:m-0 [&_pre]:bg-[hsl(220,20%,10%)] [&_pre]:rounded-md [&_pre]:p-2 [&_pre]:text-[11px] [&_pre]:overflow-x-auto [&_code]:bg-[hsl(220,20%,10%)] [&_code]:px-1 [&_code]:rounded [&_code]:text-[11px] [&_ul]:mr-3 [&_ol]:mr-3 [&_li]:my-0.5 [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_blockquote]:border-r-2 [&_blockquote]:border-primary/40 [&_blockquote]:pr-2 [&_blockquote]:text-muted-foreground">
+                      <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap">{msg.text}</p>
+                  )}
                 </div>
               </div>
             ))}
