@@ -149,11 +149,25 @@ const Index = () => {
           )}
 
           {/* Right: Preview */}
-          <ResizablePanel defaultSize={sidebarOpen ? 70 : 100}>
+          <ResizablePanel defaultSize={sidebarOpen ? (kimiOpen ? 40 : 70) : (kimiOpen ? 70 : 100)}>
             <ErrorBoundary moduleName="PreviewPanel" fallbackTitleAr="خطأ في المعاينة">
               <PreviewPanel generatedFiles={generatedFiles} />
             </ErrorBoundary>
           </ResizablePanel>
+
+          {/* Kimi Consultant Panel */}
+          <AnimatePresence>
+            {kimiOpen && (
+              <>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={30} minSize={20} maxSize={45}>
+                  <ErrorBoundary moduleName="KimiConsultant" fallbackTitleAr="خطأ في المستشار">
+                    <KimiConsultant onClose={() => setKimiOpen(false)} generatedFiles={generatedFiles} />
+                  </ErrorBoundary>
+                </ResizablePanel>
+              </>
+            )}
+          </AnimatePresence>
         </ResizablePanelGroup>
       </div>
     </div>
