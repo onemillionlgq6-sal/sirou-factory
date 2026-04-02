@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { PanelLeftClose, PanelLeftOpen, Settings, Database, GitBranch } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Settings, Database, GitBranch, Bot } from "lucide-react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import AIChatPanel from "@/components/factory/AIChatPanel";
 import PreviewPanel from "@/components/factory/PreviewPanel";
+import KimiConsultant from "@/components/factory/KimiConsultant";
 import SovereignIcon from "@/components/factory/SovereignIcon";
 import SettingsModal from "@/components/factory/SettingsModal";
 import SupabaseConnectModal from "@/components/factory/SupabaseConnectModal";
@@ -13,6 +14,7 @@ import { isLocalServerRunning } from "@/lib/local-executor";
 import { isConnected as isSupabaseConnected } from "@/lib/supabase-sync";
 import { isGitHubConnected } from "@/lib/github-sync";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { AnimatePresence } from "framer-motion";
 
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
